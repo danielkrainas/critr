@@ -1,0 +1,20 @@
+{
+  "name": "critr",
+  "version": "0.0.9",
+  "authors": [
+    "dkrainas87@gmail.com <dkrainas87@gmail.com>"
+  ],
+  "keywords": [
+    "mongodb",
+    "query",
+    "condition"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Critr client-side examples</title>
+</head>
+
+<body onload="start()">
+    <table>
+
+    </table>
+
+    <script src="../../src/critr.js" type="text/javascript"></script>
+    <script>
+        function start() {
+            console.log(Critr.test({ name: 'bob' }, { name: { $eq: 'bob' }}));
+            console.log(Critr.test({ name: 'bob' }, { name: { $eq: 'tim' }}));
+        }
+    </script>
+</body>
+</html>
