@@ -2,25 +2,25 @@
 
     var defaultOperators = {
         and: function (value, data, criteria) {
-            return value.reduce(function (p, data) {
+            return value.reduce(function (p, criteria) {
                 return p && test(data, criteria);
             }, true);
         },
 
         or: function (value, data, criteria) {
-            return value.reduce(function (p, data) {
-                return p && test(data, criteria);
+            return value.reduce(function (p, criteria) {
+                return p || test(data, criteria);
             }, false);
         },
 
         nor: function (value, data, criteria) {
-            return value.reduce(function (p, data) {
-                return p && test(data, criteria);
+            return value.reduce(function (p, criteria) {
+                return p && !test(data, criteria);
             }, true);
         },
 
         not: function (value, data, criteria) {
-            return !test(data, criteria);
+            return !test(data, value);
         },
 
         eq: function (value, data, criteria) {
@@ -74,7 +74,12 @@
         },
 
         regex: function (value, data, criteria) {
-            return data.match(new RegExp(value, criteria.$options)) !== null;
+            var r = value;
+            if (!(r instanceof RegExp)) {
+                r = new RegExp(r, criteria.$options);
+            }
+
+            return data.match(r) !== null;
         },
 
         'options': true,
@@ -92,7 +97,7 @@
 
         elemMatch: function (value, data, criteria) {
             return Array.isArray(data) && data.some(function (e) {
-                return text(e, value);
+                return test(e, value);
             });
         },
 
@@ -137,6 +142,15 @@
         return registerOp(key, noopHandler, overwrite);
     }
 
+    function clearRegistration() {
+        operators = {};
+    }
+
+    function resetOps() {
+        clearRegistration();
+        registerDefaults();
+    }
+
     function resolve(obj, path) {
         var paths = path.split('.');
         for (var i = 0; i < paths.length; i++) {
@@ -178,8 +192,8 @@
 
                 aprops.sort(sorter);
                 bprops.sort(sorter);
-                var i = 0;
-                for (var i = 0; i < aprops.length; i++) {
+                var i;
+                for (i = 0; i < aprops.length; i++) {
                     var aprop = aprops[i];
                     var bprop = bprop[i];
                     if (!deepCompare(aprop.key, bprop.key) || !deepCompare(aprop.value, bprop.value)) {
@@ -201,16 +215,20 @@
     }
 
     function test(data, criteria) {
+        var result = false;
         for (var key in criteria) {
             var value = criteria[key];
-            var result = false;
             if (key[0] !== '$') {
-                result = test(resolve(data, key), value);
+                if (typeof value !== 'object') {
+                    result = deepCompare(resolve(data, key), value);
+                } else {
+                    result = test(resolve(data, key), value);
+                }
             } else {
                 if (key in operators) {
                     result = operators[key](value, data, criteria);
                 } else {
-                    throw new Error('' + key + ' operator is not supported.');
+                    throw new Error(key + ' operator is not supported.');
                 }
             }
 
@@ -227,5 +245,7 @@
     exports.registerDefaults = registerDefaults;
     exports.registerOp = registerOp;
     exports.registerValueOp = registerValueOp;
+    exports.clearRegistration = clearRegistration;
+    exports.resetOps = resetOps;
     exports.test = test;
 })(this, typeof exports !== 'undefined' ? exports : (this.Critr = {}));
