@@ -241,7 +241,6 @@
     }
 
     registerDefaults(true);
-    exports.resolve = resolve;
     exports.registerDefaults = registerDefaults;
     exports.registerOp = registerOp;
     exports.registerValueOp = registerValueOp;
