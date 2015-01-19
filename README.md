@@ -48,13 +48,11 @@ if (result) {
 
 ## API 
 
-### `bool test(object doc, object criteria)`
+#### `bool test(object doc, object criteria)`
 
 Evaluates `doc` to see if matches all the requirements specified by `criteria` and returns the `true` if it's a match, otherwise `false`. An `Error` is thrown if an operator is encountered that has not been registered with `registerOp` or `registerValueOp`.
 
 **Note:** fields within the `criteria` object may be specified as a literal or a period-delimited path string like `'foo.x'` for `{ foo: { x: '' }}`.
-
-#### Example
 
 ##### NodeJS:
 
@@ -81,13 +79,17 @@ if (result) {
 }
 ```
 
-### `void registerDefaults()`
+---
+
+#### `void registerDefaults()`
 
 Register all built-in operators.
 
 **Note:** The operators are registered using `registerOp` with the `overwrite` option set to **true**. Any previously-registered operators with a key matching any built-in operator will be overridden.  
 
-### `bool registerOp(string key, function handler[, bool overwrite = false])`
+---
+
+#### `bool registerOp(string key, function handler[, bool overwrite = false])`
 
 Register a custom operator that matches ('$' + `key`) and executes `handler`. The `overwrite` flag, false by default, allows you to override any previously registered operator with the same key. The return value indicates if the operator was registered successfully.
 
@@ -97,9 +99,7 @@ The handler signature is `bool function(value, document, criteria)` where `value
 
 **Note:** All registered operators(value and evaluated operators) are tracked in the same lookup map and, as such, a value operator of `foo` will collide with a `foo` operator registered with `registerOp`.
 
-#### Example
-
-##### NodeJS:
+#### NodeJS:
 
 ```js
 var critr = require('critr');
@@ -111,7 +111,7 @@ var success = critr.registerOp('foo', function (value, doc, criteria) {
 var result = critr.test({ name: 'bob', age: 21 }, { age: { $foo: true }});
 ```
 
-##### Browser:
+#### Browser:
 
 ```js
 var success = Critr.registerOp('foo', function (value, doc, criteria) {
@@ -121,7 +121,9 @@ var success = Critr.registerOp('foo', function (value, doc, criteria) {
 var result = Critr.test({ name: 'bob', age: 21 }, { age: { $foo: true }});
 ```
 
-### `bool registerValueOp(string key[, bool overwrite])`
+---
+
+#### `bool registerValueOp(string key[, bool overwrite])`
 
 Register an operator that is itself not evaluated but meant to be used by another operator, such as the built-in `$options` operator. The operator and its value will be skipped/ignored by `test` when it is encountered. The `overwrite` flag, false by default, allows you to override any previously registered operator with the same key. The return value indicates if the operator was registered successfully.
 
@@ -129,9 +131,7 @@ Register an operator that is itself not evaluated but meant to be used by anothe
 
 **Note:** All registered operators(value and evaluated operators) are tracked in the same lookup map and, as such, a value operator of `foo` will collide with a `foo` operator registered with `registerOp`.
 
-#### Examples
-
-##### NodeJS:
+#### NodeJS:
 
 ```js
 var critr = require('critr');
@@ -141,7 +141,7 @@ var success = critr.registerValueOp('fooOptions');
 var result = critr.test({ name: 'bob', age: 21 }, { $fooOptions: {}, age: { $eq: 21 }});
 ```
 
-##### Browser:
+#### Browser:
 
 ```js
 var success = Critr.registerValueOp('fooOptions');
@@ -149,11 +149,11 @@ var success = Critr.registerValueOp('fooOptions');
 var result = Critr.test({ name: 'bob', age: 21 }, { $fooOptions: {}, age: { $eq: 21 }});
 ```
 
-### `void clearRegistration()`
+---
+
+#### `void clearRegistration()`
 
 Removes **all** registered operators including built-in operators. Use `registerDefaults` if you would like to re-register the built-in operators afterwards or `resetOps` to remove only non-built-in operators. 
-
-#### Examples
 
 ##### NodeJS:
 
@@ -175,11 +175,11 @@ Critr.clearRegistration();
 Critr.test({ name: 'bob', age: 21 }, { age: { $eq: true }});
 ```
 
-### `void resetOps()`
+---
+
+#### `void resetOps()`
 
 Removes all previously registered operators and re-registers the built-in ones.  
-
-#### Examples
 
 ##### NodeJS:
 
@@ -204,6 +204,8 @@ Critr.resetOps();
 // This will throw an error because the operator $fooOptions is no longer registered
 Critr.test({ name: 'bob', age: 21 }, { $fooOptions: {}, age: { $eq: 21 }});
 ```
+
+---
 
 ## Built-in Operators
 
