@@ -205,8 +205,6 @@ Critr.resetOps();
 Critr.test({ name: 'bob', age: 21 }, { $fooOptions: {}, age: { $eq: 21 }});
 ```
 
----
-
 ## Built-in Operators
 
 Critr comes with many built-in operators already registered, allowing it to be utilized without any pre-configuration. To remove the built-in operators and reset Critr to a "clean" state, see the `clearRegistration` function.
