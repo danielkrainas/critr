@@ -1,6 +1,6 @@
 {
   "name": "critr",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "A NodeJS/browser compatible criteria evaluation library utilizing a flexible and extensible MongoDB-like query syntax.",
   "main": "index.js",
   "homepage": "https://github.com/danielkrainas/critr",
