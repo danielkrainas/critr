@@ -99,7 +99,7 @@ The handler signature is `bool function(value, document, criteria)` where `value
 
 **Note:** All registered operators(value and evaluated operators) are tracked in the same lookup map and, as such, a value operator of `foo` will collide with a `foo` operator registered with `registerOp`.
 
-#### NodeJS:
+##### NodeJS:
 
 ```js
 var critr = require('critr');
@@ -111,7 +111,7 @@ var success = critr.registerOp('foo', function (value, doc, criteria) {
 var result = critr.test({ name: 'bob', age: 21 }, { age: { $foo: true }});
 ```
 
-#### Browser:
+##### Browser:
 
 ```js
 var success = Critr.registerOp('foo', function (value, doc, criteria) {
@@ -131,7 +131,7 @@ Register an operator that is itself not evaluated but meant to be used by anothe
 
 **Note:** All registered operators(value and evaluated operators) are tracked in the same lookup map and, as such, a value operator of `foo` will collide with a `foo` operator registered with `registerOp`.
 
-#### NodeJS:
+##### NodeJS:
 
 ```js
 var critr = require('critr');
@@ -141,7 +141,7 @@ var success = critr.registerValueOp('fooOptions');
 var result = critr.test({ name: 'bob', age: 21 }, { $fooOptions: {}, age: { $eq: 21 }});
 ```
 
-#### Browser:
+##### Browser:
 
 ```js
 var success = Critr.registerValueOp('fooOptions');
