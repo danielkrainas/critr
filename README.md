@@ -22,7 +22,7 @@ or by downloading scripts directly from the project's **dist** folder:
 
 ### NodeJS:
 
-```
+```js
 var critr = require('critr');
 
 var result = critr.test({ name: 'bob', age: 21 }, { age: { $gte: 21 }});
@@ -35,7 +35,7 @@ if (result) {
 
 ### Browser:
 
-```
+```js
 // API accessed via the "Critr" global.
 var result = Critr.test({ name: 'bob', age: 21 }, { age: { $gte: 21 }});
 
