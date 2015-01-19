@@ -2,12 +2,15 @@
   "name": "critr",
   "version": "0.0.9",
   "authors": [
-    "dkrainas87@gmail.com <dkrainas87@gmail.com>"
+    "Daniel Krainas <me@danielkrainas.com>"
   ],
+  "main": "./dist/critr.min.js",
   "keywords": [
     "mongodb",
     "query",
-    "condition"
+    "condition",
+    "criteria",
+    "critr"
   ],
   "license": "MIT",
   "ignore": [
