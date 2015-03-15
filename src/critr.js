@@ -240,11 +240,49 @@
         return result;
     }
 
+    function aggregate(data, operations) {
+        data = (data || []).slice(0);
+        var finalResults = [];
+        for (var i = 0; i < operations.length; i++) {
+            var op = operations[i];
+            var results = [];
+            for (var j = 0; j < data.length; j++) {
+                var item = data[j];
+                var result = null;
+                for (var key in op) {
+                    var value = op[key];
+                    if (key[0] !== '$') {
+
+                    } else {
+                        if (key === '$limit') {
+                            if (j < value) {
+                                result = item;
+                            }
+                        }
+                    }
+                }
+
+                if (result !== null) {
+                    results.push(result);
+                }
+            }
+
+            if (!results.length) {
+                break;
+            } else {
+                finalResults = results;
+            }
+        }
+
+        return finalResults;
+    }
+
     registerDefaults(true);
     exports.registerDefaults = registerDefaults;
     exports.registerOp = registerOp;
     exports.registerValueOp = registerValueOp;
     exports.clearRegistration = clearRegistration;
     exports.resetOps = resetOps;
+    exports.aggregate = aggregate;
     exports.test = test;
 })(this, typeof exports !== 'undefined' ? exports : (this.Critr = {}));
