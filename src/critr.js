@@ -242,10 +242,10 @@
 
     function aggregate(data, operations) {
         data = (data || []).slice(0);
-        var finalResults = [];
+        var finalResults = null;
         for (var i = 0; i < operations.length; i++) {
             var op = operations[i];
-            var results = [];
+            var results = finalResults || [];
             for (var j = 0; j < data.length; j++) {
                 var item = data[j];
                 var result = null;
@@ -256,6 +256,10 @@
                     } else {
                         if (key === '$limit') {
                             if (j < value) {
+                                result = item;
+                            }
+                        } else if (key === '$skip') {
+                            if (j >= value) {
                                 result = item;
                             }
                         }
@@ -274,7 +278,7 @@
             }
         }
 
-        return finalResults;
+        return finalResults || [];
     }
 
     registerDefaults(true);
