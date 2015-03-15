@@ -262,6 +262,10 @@
                             if (j >= value) {
                                 result = item;
                             }
+                        } else if (key === '$match') {
+                            if (test(item, value)) {
+                                result = item;
+                            }
                         }
                     }
                 }
