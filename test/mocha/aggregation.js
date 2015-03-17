@@ -67,4 +67,72 @@ describe('Aggregation:', function () {
             expect(result[0]).to.equal(data[0]);
         });
     });
+
+    describe('$project', function () {
+
+        beforeEach(function () {
+            data = [
+                { name: 'bob', age: 23 },
+                { name: 'fred', age: 32 }
+            ];
+        });
+
+        it('should include fields that have a value of true', function () {
+            var result = critr.aggregate(data, [
+                {
+                    $project: {
+                        name: true
+                    }
+                }
+            ]);
+
+            expect(result).to.have.length(2);
+            expect(result[0]).to.not.have.property('age');
+            expect(result[0]).to.have.property('name', 'bob');
+        });
+
+        it('should include fields that have a value of 1', function () {
+            var result = critr.aggregate(data, [
+                {
+                    $project: {
+                        name: 1
+                    }
+                }
+            ]);
+
+            expect(result).to.have.length(2);
+            expect(result[0]).to.not.have.property('age');
+            expect(result[0]).to.have.property('name', 'bob');
+        });
+
+        it('should include fields that have a field expression string', function () {
+            var result = critr.aggregate(data, [
+                {
+                    $project: {
+                        newName: '$name'
+                    }
+                }
+            ]);
+
+            expect(result).to.have.length(2);
+            expect(result[0]).to.not.have.property('name');
+            expect(result[0]).to.not.have.property('age');
+            expect(result[0]).to.have.property('newName', data[0].name);
+        });
+
+        it('should include fields that have an expression object', function () {
+            var result = critr.aggregate(data, [
+                {
+                    $project: {
+                        name: {
+                            $literal: 'sam'
+                        }
+                    }
+                }
+            ]);
+
+            expect(result).to.have.length(2);
+            expect(result[0]).to.have.property('name', 'sam');
+        });
+    });
 });

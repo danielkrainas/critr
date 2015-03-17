@@ -240,6 +240,23 @@
         return result;
     }
 
+    function evaluate(obj, expression) {
+        var result = null;
+        if (typeof expression === 'string' && expression[0] === '$') {
+            result = resolve(obj, expression.slice(1));
+        } else {
+            for (var key in expression) {
+                var value = expression[key];
+                if (key === '$literal') {
+                    result = value;
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
     function aggregate(data, operations) {
         data = (data || []).slice(0);
         var finalResults = null;
@@ -265,6 +282,25 @@
                         } else if (key === '$match') {
                             if (test(item, value)) {
                                 result = item;
+                            }
+                        } else if (key === '$project') {
+                            result = {};
+                            for (var valueKey in value) {
+                                var valueValue = value[valueKey];
+                                var include = false;
+                                var targetValue = item[valueKey];
+                                if (valueValue === true || valueValue === 1) {
+                                    include = true;
+                                } else if (valueValue === false || valueValue === 0) {
+                                    include = false;
+                                } else {
+                                    targetValue = evaluate(item, valueValue);
+                                    include = true;
+                                }
+
+                                if (include) {
+                                    result[valueKey] = targetValue;
+                                }
                             }
                         }
                     }
