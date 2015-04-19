@@ -108,8 +108,31 @@
 
     var operators = {};
 
+
     function noopHandler() {
         return true;
+    }
+
+    function deepClone(obj) {
+        var clone = {};
+        if (obj === null) {
+            return null;
+        }
+
+        for (var key in obj) {
+            if (!obj.hasOwnProperty(key)) {
+                continue;
+            }
+
+            var value = obj[key];
+            if (value && typeof(value) === 'object') {
+                value = deepClone(value);
+            }
+
+            clone[key] = value;
+        }
+
+        return clone;
     }
 
     function registerDefaults(overwrite) {
@@ -240,10 +263,14 @@
         return result;
     }
 
+    function evaluateFieldExpression(obj, expression) {
+        return resolve(obj, expression.slice(1));
+    }
+
     function evaluate(obj, expression) {
         var result = null;
         if (typeof expression === 'string' && expression[0] === '$') {
-            result = resolve(obj, expression.slice(1));
+            result = evaluateFieldExpression(obj, expression);
         } else {
             for (var key in expression) {
                 var value = expression[key];
@@ -302,11 +329,26 @@
                                     result[valueKey] = targetValue;
                                 }
                             }
+                        } else if (key === '$unwind') {
+                            var targetKey = value.slice(1);
+                            var valueItems = evaluateFieldExpression(item, value);
+                            if (valueItems !== null && Array.isArray(valueItems)) {
+                                result = [];
+                                for (var k = 0; k < valueItems.length; k++) {
+                                    var clone = deepClone(item);
+                                    clone[targetKey] = valueItems[k];
+                                    result.push(clone);
+                                }
+                            }
                         }
                     }
                 }
 
-                if (result !== null) {
+                if (Array.isArray(result)) {
+                    result.forEach(function (r) {
+                        results.push(r);
+                    });
+                } else if (result !== null) {
                     results.push(result);
                 }
             }

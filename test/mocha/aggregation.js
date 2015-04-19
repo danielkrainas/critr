@@ -68,6 +68,27 @@ describe('Aggregation:', function () {
         });
     });
 
+    describe('$unwind', function () {
+
+        beforeEach(function () {
+            data = [
+                { name: 'bob', kids: ['pete', 'tim'] }
+            ];
+        });
+
+        it('should return multiple results with target value replaced with singular array elements', function () {
+            var result = critr.aggregate(data, [
+                {
+                    $unwind: '$kids'
+                }
+            ]);
+
+            expect(result).to.have.length(2);
+            expect(result[0]).to.have.property('kids', 'pete');
+            expect(result[1]).to.have.property('kids', 'tim');
+        });
+    });
+
     describe('$project', function () {
 
         beforeEach(function () {
