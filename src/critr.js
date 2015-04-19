@@ -1,3 +1,5 @@
+"use strict";
+
 (function (global, exports) {
 
     var defaultOperators = {
@@ -286,6 +288,17 @@
 
     function aggregate(data, operations) {
         data = (data || []).slice(0);
+
+        var addToResults = function (result, results) {
+            if (Array.isArray(result)) {
+                result.forEach(function (r) {
+                    results.push(r);
+                });
+            } else if (result !== null) {
+                results.push(result);
+            }
+        };
+
         var finalResults = null;
         for (var i = 0; i < operations.length; i++) {
             var op = operations[i];
@@ -344,13 +357,7 @@
                     }
                 }
 
-                if (Array.isArray(result)) {
-                    result.forEach(function (r) {
-                        results.push(r);
-                    });
-                } else if (result !== null) {
-                    results.push(result);
-                }
+                addToResults(result, results);
             }
 
             if (!results.length) {
@@ -371,4 +378,5 @@
     exports.resetOps = resetOps;
     exports.aggregate = aggregate;
     exports.test = test;
+    
 })(this, typeof exports !== 'undefined' ? exports : (this.Critr = {}));
