@@ -3,108 +3,108 @@
 (function (global, exports) {
 
     var defaultOperators = {
-        and: function (value, data, criteria) {
-            return value.reduce(function (p, criteria) {
-                return p && test(data, criteria);
+        and: function (context) {
+            return context.value.reduce(function (p, criteria) {
+                return p && test(context.data, criteria);
             }, true);
         },
 
-        or: function (value, data, criteria) {
-            return value.reduce(function (p, criteria) {
-                return p || test(data, criteria);
+        or: function (context) {
+            return context.value.reduce(function (p, criteria) {
+                return p || test(context.data, criteria);
             }, false);
         },
 
-        nor: function (value, data, criteria) {
-            return value.reduce(function (p, criteria) {
-                return p && !test(data, criteria);
+        nor: function (context) {
+            return context.value.reduce(function (p, criteria) {
+                return p && !test(context.data, criteria);
             }, true);
         },
 
-        not: function (value, data, criteria) {
-            return !test(data, value);
+        not: function (context) {
+            return !test(context.data, context.value);
         },
 
-        eq: function (value, data, criteria) {
-            return deepCompare(data, value);
+        eq: function (context) {
+            return deepCompare(context.data, context.value);
         },
 
-        ne: function (value, data, criteria) {
-            return !deepCompare(data, value);
+        ne: function (context) {
+            return !deepCompare(context.data, context.value);
         },
 
-        lt: function (value, data, criteria) {
-            return data < value;
+        lt: function (context) {
+            return context.data < context.value;
         },
 
-        lte: function (value, data, criteria) {
-            return data <= value;
+        lte: function (context) {
+            return context.data <= context.value;
         },
 
-        gt: function (value, data, criteria) {
-            return data > value;
+        gt: function (context) {
+            return context.data > context.value;
         },
 
-        gte: function (value, data, criteria) {
-            return data >= value;
+        gte: function (context) {
+            return context.data >= context.value;
         },
 
-        in: function (value, data, criteria) {
-            var a = asArray(data);
-            return asArray(value).some(function (e) {
+        in: function (context) {
+            var a = asArray(context.data);
+            return asArray(context.value).some(function (e) {
                 return a.indexOf(e) >= 0;
             });
         },
 
-        nin: function (value, data, criteria) {
-            var a = asArray(data);
-            return asArray(value).every(function (e) {
+        nin: function (context) {
+            var a = asArray(context.data);
+            return asArray(context.value).every(function (e) {
                 return a.indexOf(e) < 0;
             });
         },
 
-        exists: function (value, data, criteria) {
-            return !(value ^ (data !== null));
+        exists: function (context) {
+            return !(context.value ^ (context.data !== null));
         },
 
-        type: function (value, data, criteria) {
-            return typeof data === value;
+        type: function (context) {
+            return typeof context.data === context.value;
         },
 
-        mod: function (value, data, criteria) {
-            return (data % value[0]) === value[1];
+        mod: function (context) {
+            return (context.data % context.value[0]) === context.value[1];
         },
 
-        regex: function (value, data, criteria) {
-            var r = value;
+        regex: function (context) {
+            var r = context.value;
             if (!(r instanceof RegExp)) {
-                r = new RegExp(r, criteria.$options);
+                r = new RegExp(r, context.criteria.$options);
             }
 
-            return data.match(r) !== null;
+            return context.data.match(r) !== null;
         },
 
         'options': true,
 
-        where: function (value, data, criteria) {
-            return value.call(null, data);
+        where: function (context) {
+            return context.value.call(null, context.data);
         },
 
-        all: function (value, data, criteria) {
-            var a = asArray(data);
-            return value.every(function (e) {
+        all: function (context) {
+            var a = asArray(context.data);
+            return context.value.every(function (e) {
                 return a.indexOf(e) >= 0;
             });
         },
 
-        elemMatch: function (value, data, criteria) {
-            return Array.isArray(data) && data.some(function (e) {
-                return test(e, value);
+        elemMatch: function (context) {
+            return Array.isArray(context.data) && context.data.some(function (e) {
+                return test(e, context.value);
             });
         },
 
-        size: function (value, data, criteria) {
-            return value === (Array.isArray(data) ? data.length : 0);
+        size: function (context) {
+            return context.value === (Array.isArray(context.data) ? context.data.length : 0);
         }
     };
 
@@ -251,7 +251,11 @@
                 }
             } else {
                 if (key in operators) {
-                    result = operators[key](value, data, criteria);
+                    result = operators[key].call(null, {
+                        value: value, 
+                        data: data,
+                        criteria: criteria
+                    });
                 } else {
                     throw new Error(key + ' operator is not supported.');
                 }
