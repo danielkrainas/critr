@@ -26,6 +26,87 @@ describe('Aggregation:', function () {
         });
     });
 
+    describe('$sort', function () {
+
+        beforeEach(function () {
+            data = [
+                { name: 'fred', age: 4 },
+                { name: 'fred', age: 8 },
+                { name: 'bob', age: 19 }
+            ];
+        });
+
+        it('should sort data in ascending order', function (done) {
+            critr.aggregate(data, [
+                { $sort: { name: 1 } }
+            ], function (result) {
+                expect(result).to.have.length(3);
+                expect(result[0]).to.equal(data[2]);
+                expect(result[1]).to.equal(data[0]);
+                done();
+            });
+        });
+
+        it('should sort data in descending order', function (done) {
+            critr.aggregate(data, [
+                { $sort: { name: -1 } }
+            ], function (result) {
+                expect(result).to.have.length(3);
+                expect(result[0]).to.equal(data[0]);
+                expect(result[2]).to.equal(data[2]);
+                done();
+            });
+        });
+
+        it('should sort data on multiple fields', function (done) {
+            critr.aggregate(data, [
+                {
+                    $sort: {
+                        name: 1,
+                        age: -1
+                    }
+                }
+            ], function (result) {
+                expect(result).to.have.length(3);
+                expect(result[0]).to.equal(data[2]);
+                expect(result[1]).to.equal(data[1]);
+                done();
+            });
+        });
+    });
+
+    describe('$output', function () {
+
+        beforeEach(function () {
+            data = [
+                { name: 'bob' },
+                { name: 'fred' }
+            ];
+        });
+
+        it('should output results to specified array', function (done) {
+            var snapshot = [];
+            critr.aggregate(data, [
+                {
+                    $project: {
+                        newName: '$name'
+                    }
+                },
+                {
+                    $output: snapshot
+                },
+                {
+                    $limit: 1
+                }
+            ], function (result) {
+                expect(result).to.have.length(1);
+                expect(result).to.not.equal(snapshot);
+                expect(snapshot).to.have.length(2);
+                done();
+            });
+        });
+    });
+
     describe('$limit', function () {
 
         beforeEach(function () {

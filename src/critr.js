@@ -9,6 +9,43 @@ var Critr = (function () {
     };
 
     var $filters = {
+        $sort: function (context, next) {
+            var sorted = context.data.sort(function (a, b) {
+                for (var key in context.param) {
+                    var av = a[key];
+                    var bv = b[key];
+
+                    var r = 0;
+                    if (av < bv) {
+                        r = -1;
+                    } else if (av > bv) {
+                        r = 1;
+                    }
+
+                    r *= context.param[key];
+                    if (r !== 0) {
+                        return r;
+                    }
+                }
+
+                return 0;
+            });
+
+            context.outputAll(sorted);
+            next();
+        },
+
+        $output: function (context, next) {
+            if (context.param && context.param.push) {
+                context.data.forEach(function (item, index) {
+                    context.param.push(item);
+                    context.output(item);
+                });
+            }
+
+            next();
+        },
+
         $limit: function (context, next) {
             context.data.forEach(function (item, index) {
                 if (index < context.param) {
