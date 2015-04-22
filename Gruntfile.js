@@ -13,7 +13,9 @@ module.exports = function(grunt) {
                     globals: {
                         require: false,
                         __dirname: false,
-                        exports: false
+                        exports: false,
+                        module: false,
+                        setTimeout: false
                     }
                 }
             }

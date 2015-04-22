@@ -1,7 +1,6 @@
 "use strict";
 
-(function (global, exports) {
-
+var Critr = (function () {
     var defer = function (fn, args) {
         args = args || [];
         return setTimeout(function () {
@@ -435,12 +434,21 @@
     }
 
     registerDefaults(true);
-    exports.registerDefaults = registerDefaults;
-    exports.registerOp = registerOp;
-    exports.registerValueOp = registerValueOp;
-    exports.clearRegistration = clearRegistration;
-    exports.resetOps = resetOps;
-    exports.aggregate = aggregate;
-    exports.test = test;
-    
-})(this, typeof exports !== 'undefined' ? exports : (this.Critr = {}));
+    return {
+        registerDefaults: registerDefaults,
+        registerOp: registerOp,
+        registerValueOp: registerValueOp,
+        clearRegistration: clearRegistration,
+        resetOps: resetOps,
+        aggregate: aggregate,
+        test: test
+    };
+})();
+
+(function () {
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = Critr;
+    } else {
+        this.Critr = Critr;
+    }
+}).call(this);
