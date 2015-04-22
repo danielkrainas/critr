@@ -5,6 +5,27 @@ var critr = require('../../src/critr');
 describe('Aggregation:', function () {
     var data;
 
+    describe('piping', function () {
+        beforeEach(function () {
+            data = [
+                { name: 'bob' },
+                { name: 'fred' },
+                { name: 'john' }
+            ];
+        });
+
+        it('should return result after running data through $skip and $limit operations', function (done) {
+            critr.aggregate(data, [
+                { $skip: 1 },
+                { $limit: 1 }
+            ], function (result) {
+                expect(result).to.have.length(1);
+                expect(result[0]).to.equal(data[1]);
+                done();
+            });
+        });
+    });
+
     describe('$limit', function () {
 
         beforeEach(function () {
@@ -14,15 +35,16 @@ describe('Aggregation:', function () {
             ];
         });
 
-        it('should truncate data to length no greater than specified', function () {
-            var result = critr.aggregate(data, [
+        it('should truncate data to length no greater than specified', function (done) {
+            critr.aggregate(data, [
                 {
                     $limit: 1
                 }
-            ]);
-
-            expect(result).to.have.length(1);
-            expect(result[0]).to.equal(data[0]);
+            ], function (result) {
+                expect(result).to.have.length(1);
+                expect(result[0]).to.equal(data[0]);
+                done();
+            });
         });
     });
 
@@ -35,15 +57,16 @@ describe('Aggregation:', function () {
             ];
         });
 
-        it('should skip specified number of elements', function () {
-            var result = critr.aggregate(data, [
+        it('should skip specified number of elements', function (done) {
+            critr.aggregate(data, [
                 {
                     $skip: 1
                 }
-            ]);
-
-            expect(result).to.have.length(1);
-            expect(result[0]).to.equal(data[1]);
+            ], function (result) {
+                expect(result).to.have.length(1);
+                expect(result[0]).to.equal(data[1]);
+                done();
+            });
         });
     });
 
@@ -56,15 +79,16 @@ describe('Aggregation:', function () {
             ];
         });
 
-        it('should only return elements that match expression', function () {
+        it('should only return elements that match expression', function (done) {
             var result = critr.aggregate(data, [
                 {
                     $match: { age: { $gt: 15 } }
                 }
-            ]);
-
-            expect(result).to.have.length(1);
-            expect(result[0]).to.equal(data[0]);
+            ], function (result) {
+                expect(result).to.have.length(1);
+                expect(result[0]).to.equal(data[0]);
+                done();
+            });
         });
     });
 
@@ -76,16 +100,17 @@ describe('Aggregation:', function () {
             ];
         });
 
-        it('should return multiple results with target value replaced with singular array elements', function () {
-            var result = critr.aggregate(data, [
+        it('should return multiple results with target value replaced with singular array elements', function (done) {
+            critr.aggregate(data, [
                 {
                     $unwind: '$kids'
                 }
-            ]);
-
-            expect(result).to.have.length(2);
-            expect(result[0]).to.have.property('kids', 'pete');
-            expect(result[1]).to.have.property('kids', 'tim');
+            ], function (result) {
+                expect(result).to.have.length(2);
+                expect(result[0]).to.have.property('kids', 'pete');
+                expect(result[1]).to.have.property('kids', 'tim');
+                done();
+            });
         });
     });
 
@@ -98,51 +123,54 @@ describe('Aggregation:', function () {
             ];
         });
 
-        it('should include fields that have a value of true', function () {
-            var result = critr.aggregate(data, [
+        it('should include fields that have a value of true', function (done) {
+            critr.aggregate(data, [
                 {
                     $project: {
                         name: true
                     }
                 }
-            ]);
-
-            expect(result).to.have.length(2);
-            expect(result[0]).to.not.have.property('age');
-            expect(result[0]).to.have.property('name', 'bob');
+            ], function (result) {
+                expect(result).to.have.length(2);
+                expect(result[0]).to.not.have.property('age');
+                expect(result[0]).to.have.property('name', 'bob');
+                done();
+            });
         });
 
-        it('should include fields that have a value of 1', function () {
-            var result = critr.aggregate(data, [
+        it('should include fields that have a value of 1', function (done) {
+            critr.aggregate(data, [
                 {
                     $project: {
                         name: 1
                     }
                 }
-            ]);
-
-            expect(result).to.have.length(2);
-            expect(result[0]).to.not.have.property('age');
-            expect(result[0]).to.have.property('name', 'bob');
+            ], function (result) {
+                expect(result).to.have.length(2);
+                expect(result[0]).to.not.have.property('age');
+                expect(result[0]).to.have.property('name', 'bob');
+                done();
+            });
         });
 
-        it('should include fields that have a field expression string', function () {
-            var result = critr.aggregate(data, [
+        it('should include fields that have a field expression string', function (done) {
+            critr.aggregate(data, [
                 {
                     $project: {
                         newName: '$name'
                     }
                 }
-            ]);
-
-            expect(result).to.have.length(2);
-            expect(result[0]).to.not.have.property('name');
-            expect(result[0]).to.not.have.property('age');
-            expect(result[0]).to.have.property('newName', data[0].name);
+            ], function (result) {
+                expect(result).to.have.length(2);
+                expect(result[0]).to.not.have.property('name');
+                expect(result[0]).to.not.have.property('age');
+                expect(result[0]).to.have.property('newName', data[0].name);
+                done();
+            });
         });
 
-        it('should include fields that have an expression object', function () {
-            var result = critr.aggregate(data, [
+        it('should include fields that have an expression object', function (done) {
+            critr.aggregate(data, [
                 {
                     $project: {
                         name: {
@@ -150,10 +178,11 @@ describe('Aggregation:', function () {
                         }
                     }
                 }
-            ]);
-
-            expect(result).to.have.length(2);
-            expect(result[0]).to.have.property('name', 'sam');
+            ], function (result) {
+                expect(result).to.have.length(2);
+                expect(result[0]).to.have.property('name', 'sam');
+                done();
+            });
         });
     });
 });

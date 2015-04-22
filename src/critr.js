@@ -2,6 +2,88 @@
 
 (function (global, exports) {
 
+    var defer = function (fn, args) {
+        args = args || [];
+        return setTimeout(function () {
+            fn.apply(null, args);
+        }, 0);
+    };
+
+    var $filters = {
+        $limit: function (context, next) {
+            context.data.forEach(function (item, index) {
+                if (index < context.param) {
+                    context.output(item);
+                }
+            });
+
+            next();
+        },
+
+        $skip: function (context, next) {
+            context.data.forEach(function (item, index) {
+                if (index >= context.param) {
+                    context.output(item);
+                }
+            });
+
+            next();
+        },
+
+        $match: function (context, next) {
+            context.data.forEach(function (item, index) {
+                if (test(item, context.param)) {
+                    context.output(item);
+                }
+            });
+
+            next();            
+        },
+
+        $project: function (context, next) {
+            context.data.forEach(function (item, index) {
+                var result = {};
+                for (var key in context.param) {
+                    var paramValue = context.param[key];
+                    var include = false;
+                    var value = item[key];
+                    if (paramValue === true || paramValue === 1) {
+                        include = true;
+                    } else if (paramValue === false || paramValue === 0) {
+                        include = false;
+                    } else {
+                        value = evaluate(item, paramValue);
+                        include = true;
+                    }
+
+                    if (include) {
+                        result[key] = value;
+                    }
+                }
+
+                context.output(result);
+            });
+
+            next();
+        },
+
+        $unwind: function (context, next) {
+            context.data.forEach(function (item, index) {
+                var key = context.param.slice(1);
+                var values = evaluateFieldExpression(item, context.param);
+                if (values !== null && Array.isArray(values)) {
+                    for (var k = 0; k < values.length; k++) {
+                        var clone = deepClone(item);
+                        clone[key] = values[k];
+                        context.output(clone);
+                    }
+                }
+            });
+
+            next();
+        }
+    };
+
     var defaultOperators = {
         and: function (context) {
             return context.value.reduce(function (p, criteria) {
@@ -290,88 +372,66 @@
         return result;
     }
 
-    function aggregate(data, operations) {
+    function aggregate(data, operations, callback) {
         data = (data || []).slice(0);
+        var operationIndex = -1;
 
-        var addToResults = function (result, results) {
-            if (Array.isArray(result)) {
-                result.forEach(function (r) {
-                    results.push(r);
-                });
-            } else if (result !== null) {
-                results.push(result);
+        var nextOperation = function () {
+            if (++operationIndex >= operations.length) {
+                return callback(data);
             }
-        };
 
-        var finalResults = null;
-        for (var i = 0; i < operations.length; i++) {
-            var op = operations[i];
-            var results = finalResults || [];
-            for (var j = 0; j < data.length; j++) {
-                var item = data[j];
-                var result = null;
-                for (var key in op) {
-                    var value = op[key];
-                    if (key[0] !== '$') {
+            var op = operations[operationIndex];
+            var opFilters = Object.keys(op);
+            var filterIndex = -1;
+            var results = [];
 
-                    } else {
-                        if (key === '$limit') {
-                            if (j < value) {
-                                result = item;
-                            }
-                        } else if (key === '$skip') {
-                            if (j >= value) {
-                                result = item;
-                            }
-                        } else if (key === '$match') {
-                            if (test(item, value)) {
-                                result = item;
-                            }
-                        } else if (key === '$project') {
-                            result = {};
-                            for (var valueKey in value) {
-                                var valueValue = value[valueKey];
-                                var include = false;
-                                var targetValue = item[valueKey];
-                                if (valueValue === true || valueValue === 1) {
-                                    include = true;
-                                } else if (valueValue === false || valueValue === 0) {
-                                    include = false;
-                                } else {
-                                    targetValue = evaluate(item, valueValue);
-                                    include = true;
-                                }
+            var outputAll = function (result) {
+                result = result || [];
+                results = results.concat(result);
+            };
 
-                                if (include) {
-                                    result[valueKey] = targetValue;
-                                }
-                            }
-                        } else if (key === '$unwind') {
-                            var targetKey = value.slice(1);
-                            var valueItems = evaluateFieldExpression(item, value);
-                            if (valueItems !== null && Array.isArray(valueItems)) {
-                                result = [];
-                                for (var k = 0; k < valueItems.length; k++) {
-                                    var clone = deepClone(item);
-                                    clone[targetKey] = valueItems[k];
-                                    result.push(clone);
-                                }
-                            }
-                        }
-                    }
+            var output = function (result) {
+                if (result !== null) {
+                    results.push(result);
+                }
+            };
+
+            var nextFilter = function () {
+                if (++filterIndex >= opFilters.length) {
+                    data = results;
+                    return defer(nextOperation);
                 }
 
-                addToResults(result, results);
-            }
+                var filterName = opFilters[filterIndex];
+                var filter = $filters[filterName];
+                if (!filter) {
+                    // throw an error or something. `filterName` is not a known filter
+                    return defer(nextFilter);
+                }
 
-            if (!results.length) {
-                break;
-            } else {
-                finalResults = results;
-            }
-        }
+                var filterParam = op[filterName];
 
-        return finalResults || [];
+                var context = {
+                    count: data.length,
+                    data: data,
+                    operation: op,
+                    filter: filter,
+                    filterName: filterName,
+                    param: filterParam,
+                    output: output,
+                    outputAll: outputAll
+                };
+
+                filter.call(null, context, function () {
+                    defer(nextFilter);
+                });
+            };
+
+            defer(nextFilter);
+        };
+
+        defer(nextOperation);
     }
 
     registerDefaults(true);
