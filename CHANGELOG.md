@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - This CHANGELOG file to hopefully capture any change notes
 - `evaluate` method to public interface.
 - Code Climate badge to README.
+- get operation with `operator` method.
 
 ### Changed
 - The public interface into a type accessible via `<instance>.Critr`
@@ -14,11 +15,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Operator `$literal` to be a real operator.
 - Operator context property `criteria` changed to `expression`
 - `evaluate` to support general operators.
+- `registerOps` to `operator`.
+- Operator registration no longer prepends '$' to names.
 
 ### Removed
 - `resetOps` for now. Create new instance of type for a clean state.
 - `clearRegistration` for now. Create new instance of type for a clean state.
 - `registerDefaults`. Create new instance of type with `defaults` and `defaultFilters` true.
+- `registerValueOp`. Simply create your own operator with a noop handler for these instances.
 
 
 [unreleased]: https://github.com/danielkrainas/critr/compare/v0.1.0...HEAD

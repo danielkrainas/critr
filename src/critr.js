@@ -389,8 +389,11 @@
 
         Critr.prototype.Critr = Critr;
 
-        Critr.prototype.registerOp = function (key, handler, overwrite) {
-            key = '$' + key;
+        Critr.prototype.operator = function (key, handler, overwrite) {
+            if (arguments.length === 1) {
+                return this.operators[key];
+            }
+
             if (key in this.operators) {
                 if (overwrite) {
                     this.operators[key] = handler;
@@ -404,10 +407,6 @@
             return true;
         };
 
-        Critr.prototype.registerValueOp = function (key, overwrite) {
-            return this.registerOp(key, noopHandler, overwrite);
-        };
-
         Critr.prototype.test = function (data, criteria) {
             var result = false;
             for (var key in criteria) {
@@ -419,11 +418,7 @@
                         result = this.test(resolve(data, key), value);
                     }
                 } else {
-                    if (key in this.operators) {
-                        result = !!this.evaluate(data, criteria);
-                    } else {
-                        throw new Error(key + ' operator is not supported.');
-                    }
+                    result = !!this.evaluate(data, criteria);
                 }
 
                 if (!result) {
@@ -445,8 +440,9 @@
             } else {
                 for (var key in expression) {
                     var value = expression[key];
-                    if (key in this.operators) {
-                        result = this.operators[key].call(this, {
+                    var operator = this.operator(key);
+                    if (operator) {
+                        result = operator.call(this, {
                             value: value,
                             data: obj,
                             expression: expression,
