@@ -500,4 +500,5 @@
     } else {
         this.Critr = instance;
     }
-}).call(this);
+
+}).call(this); // jshint ignore:line
