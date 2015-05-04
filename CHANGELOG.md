@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - The public interface into a type accessible via `<instance>.Critr`
+- Term *filter* to *stage* keeping closer to MongoDB's terminology.
 
 ### Removed
 - `resetOps` for now. Create new instance of type for a clean state.

@@ -7,7 +7,7 @@
     };
 
     var defaults = {
-        filters: {
+        stages: {
             $sort: function (context, next) {
                 var sorted = context.data.sort(function (a, b) {
                     for (var key in context.param) {
@@ -36,7 +36,7 @@
 
             $output: function (context, next) {
                 if (context.param && context.param.push) {
-                    context.data.forEach(function (item, index) {
+                    context.forEachItem(function (item, index) {
                         context.param.push(item);
                         context.output(item);
                     });
@@ -46,7 +46,7 @@
             },
 
             $limit: function (context, next) {
-                context.data.forEach(function (item, index) {
+                context.forEachItem(function (item, index) {
                     if (index < context.param) {
                         context.output(item);
                     }
@@ -56,7 +56,7 @@
             },
 
             $skip: function (context, next) {
-                context.data.forEach(function (item, index) {
+                context.forEachItem(function (item, index) {
                     if (index >= context.param) {
                         context.output(item);
                     }
@@ -66,17 +66,17 @@
             },
 
             $match: function (context, next) {
-                context.data.forEach(function (item, index) {
-                    if (context._.test(item, context.param)) {
+                context.forEachItem(function (item, index) {
+                    if (this.test(item, context.param)) {
                         context.output(item);
                     }
                 });
 
-                next();            
+                next();
             },
 
             $project: function (context, next) {
-                context.data.forEach(function (item, index) {
+                context.forEachItem(function (item, index) {
                     var result = {};
                     for (var key in context.param) {
                         var paramValue = context.param[key];
@@ -87,7 +87,7 @@
                         } else if (paramValue === false || paramValue === 0) {
                             include = false;
                         } else {
-                            value = context._.evaluate(item, paramValue);
+                            value = this.evaluate(item, paramValue);
                             include = true;
                         }
 
@@ -103,9 +103,9 @@
             },
 
             $unwind: function (context, next) {
-                context.data.forEach(function (item, index) {
+                context.forEachItem(function (item, index) {
                     var key = context.param.slice(1);
-                    var values = context._.evaluateFieldExpression(item, context.param);
+                    var values = this.evaluateFieldExpression(item, context.param);
                     if (values !== null && Array.isArray(values)) {
                         for (var k = 0; k < values.length; k++) {
                             var clone = deepClone(item);
@@ -318,18 +318,68 @@
         }, 0);
     };
 
+    var StageContextFactory = (function () {
+        var StageContext = function (stage, data, critr) {
+            var operatorName = Object.keys(stage)[0];
+
+            this.results = [];
+            this.data = data;
+            this.count = data.length;
+            this.stage = stage;
+            this.operator = critr.stages[operatorName];
+            this.name = operatorName;
+            this.param = stage[operatorName];
+            this.critr = critr;
+        };
+
+        StageContext.prototype.forEachItem = function (fn) {
+            var critr = this.critr;
+            this.data.forEach(function (item, index) {
+                fn.call(critr, item, index);
+            });
+        };
+
+        StageContext.prototype.outputAll = function (result) {
+            result = result || [];
+            this.results = this.results.concat(result);
+        };
+
+        StageContext.prototype.output = function (result) {
+            if (result !== null) {
+                this.results.push(result);
+            }            
+        };
+
+        StageContext.prototype.callOperator = function (callback) {
+            var context = this;
+            this.operator.call(this.critr, this, function () {
+                callback(context.results);
+            });
+        };
+
+        var StageContextFactory = function (critr) {
+            this.critr = critr;
+        };
+
+        StageContextFactory.prototype.create = function (options) {           
+            return new StageContext(options.stage, options.data, this.critr);
+        };
+
+        return StageContextFactory;
+    })();
+
     var Critr = (function () {
         var Critr = function (options) {
             options = options || {};
-            this.filters = {};
+            this.stages = {};
             this.operators = {};
 
             if (options.defaults) {
                 this.operators = Object.create(defaults.operators);
             }
 
-            if (options.defaultFilters) {
-                this.filters = Object.create(defaults.filters);
+            if (options.defaultStages) {
+                this.stages = Object.create(defaults.stages);
             }
         };
 
@@ -406,68 +456,34 @@
             return result;
         };
 
-        Critr.prototype.aggregate = function (data, operations, callback) {
-            var _ = this;
+        Critr.prototype.aggregate = function (data, stages, callback) {
             data = (data || []).slice(0);
-            var operationIndex = -1;
+            var stageIndex = -1;
+            var contextFactory = new StageContextFactory(this);
 
-            var nextOperation = function () {
-                if (++operationIndex >= operations.length) {
+            var nextStage = function () {
+                if (++stageIndex >= stages.length) {
                     return callback(data);
                 }
 
-                var op = operations[operationIndex];
-                var opFilters = Object.keys(op);
-                var filterIndex = -1;
-                var results = [];
+                var stage = stages[stageIndex];
+                var context = contextFactory.create({
+                    stage: stage,
+                    data: data
+                });
 
-                var outputAll = function (result) {
-                    result = result || [];
-                    results = results.concat(result);
-                };
+                if (!context.operator) {
+                    // throw an error or something. `operatorName` is not a known filter
+                    return defer(nextStage);
+                }
 
-                var output = function (result) {
-                    if (result !== null) {
-                        results.push(result);
-                    }
-                };
-
-                var nextFilter = function () {
-                    if (++filterIndex >= opFilters.length) {
-                        data = results;
-                        return defer(nextOperation);
-                    }
-
-                    var filterName = opFilters[filterIndex];
-                    var filter = _.filters[filterName];
-                    if (!filter) {
-                        // throw an error or something. `filterName` is not a known filter
-                        return defer(nextFilter);
-                    }
-
-                    var filterParam = op[filterName];
-
-                    var context = {
-                        count: data.length,
-                        data: data,
-                        operation: op,
-                        filter: filter,
-                        filterName: filterName,
-                        param: filterParam,
-                        output: output,
-                        outputAll: outputAll,
-                        _: _
-                    };
-
-                    filter.call(_, context, function () {
-                        defer(nextFilter);
-                    });
-                };
-
-                defer(nextFilter);
+                context.callOperator(function (results) {
+                    data = results;
+                    defer(nextStage);
+                });
             };
 
-            defer(nextOperation);
+            defer(nextStage);
         };
 
         return Critr;
@@ -475,7 +491,7 @@
 
     var instance = new Critr({
         defaults: true,
-        defaultFilters: true
+        defaultStages: true
     });
 
     if (typeof module !== 'undefined' && module.exports) {
