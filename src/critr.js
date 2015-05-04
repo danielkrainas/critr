@@ -330,7 +330,7 @@
             this.data = data;
             this.count = data.length;
             this.stage = stage;
-            this.operator = critr.stages[operatorName];
+            this.operator = critr.stage(operatorName);
             this.name = operatorName;
             this.param = stage[operatorName];
             this.critr = critr;
@@ -388,6 +388,24 @@
         };
 
         Critr.prototype.Critr = Critr;
+
+        Critr.prototype.stage = function (key, handler, overwrite) {
+            if (arguments.length === 1) {
+                return this.stages[key];
+            }
+
+            if (key in this.stages) {
+                if (overwrite) {
+                    this.stages[key] = handler;
+                } else {
+                    return false;
+                }
+            } else {
+                this.stages[key] = handler;
+            }
+
+            return true;
+        };
 
         Critr.prototype.operator = function (key, handler, overwrite) {
             if (arguments.length === 1) {
