@@ -1,5 +1,7 @@
 #Critr
 
+[![Quality](https://codeclimate.com/github/danielkrainas/critr/badges/gpa.svg)](https://codeclimate.com/github/danielkrainas/critr)
+
 A NodeJS/browser compatible criteria evaluation library utilizing a flexible and extensible MongoDB-like query syntax.
 
 ## Installation
