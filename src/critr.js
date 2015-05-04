@@ -121,20 +121,20 @@
 
         operators: {
             $and: function (context) {
-                return context.value.reduce(function (p, criteria) {
-                    return p && context._.test(context.data, criteria);
+                return context.value.reduce(function (p, expression) {
+                    return p && context._.test(context.data, expression);
                 }, true);
             },
 
             $or: function (context) {
-                return context.value.reduce(function (p, criteria) {
-                    return p || context._.test(context.data, criteria);
+                return context.value.reduce(function (p, expression) {
+                    return p || context._.test(context.data, expression);
                 }, false);
             },
 
             $nor: function (context) {
-                return context.value.reduce(function (p, criteria) {
-                    return p && !context._.test(context.data, criteria);
+                return context.value.reduce(function (p, expression) {
+                    return p && !context._.test(context.data, expression);
                 }, true);
             },
 
@@ -195,7 +195,7 @@
             $regex: function (context) {
                 var r = context.value;
                 if (!(r instanceof RegExp)) {
-                    r = new RegExp(r, context.criteria.$options);
+                    r = new RegExp(r, context.expression.$options);
                 }
 
                 return context.data.match(r) !== null;
@@ -222,6 +222,10 @@
 
             $size: function (context) {
                 return context.value === (Array.isArray(context.data) ? context.data.length : 0);
+            },
+
+            $literal: function (context) {
+                return context.value;
             }
         }
     };
@@ -416,12 +420,7 @@
                     }
                 } else {
                     if (key in this.operators) {
-                        result = this.operators[key].call(this, {
-                            value: value, 
-                            data: data,
-                            criteria: criteria,
-                            _: this
-                        });
+                        result = !!this.evaluate(data, criteria);
                     } else {
                         throw new Error(key + ' operator is not supported.');
                     }
@@ -446,9 +445,15 @@
             } else {
                 for (var key in expression) {
                     var value = expression[key];
-                    if (key === '$literal') {
-                        result = value;
-                        break;
+                    if (key in this.operators) {
+                        result = this.operators[key].call(this, {
+                            value: value,
+                            data: obj,
+                            expression: expression,
+                            _: this
+                        });
+                    } else {
+                        throw new Error(key + ' operator is not supported.');
                     }
                 }
             }
