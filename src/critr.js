@@ -1,16 +1,13 @@
 "use strict";
 
 (function () {
-    
-    var Critr = (function () {
-        var defer = function (fn, args) {
-            args = args || [];
-            return setTimeout(function () {
-                fn.apply(null, args);
-            }, 0);
-        };
 
-        var $filters = {
+    var noopHandler = function () {
+        return true;
+    };
+
+    var defaults = {
+        filters: {
             $sort: function (context, next) {
                 var sorted = context.data.sort(function (a, b) {
                     for (var key in context.param) {
@@ -70,7 +67,7 @@
 
             $match: function (context, next) {
                 context.data.forEach(function (item, index) {
-                    if (test(item, context.param)) {
+                    if (context._.test(item, context.param)) {
                         context.output(item);
                     }
                 });
@@ -90,7 +87,7 @@
                         } else if (paramValue === false || paramValue === 0) {
                             include = false;
                         } else {
-                            value = evaluate(item, paramValue);
+                            value = context._.evaluate(item, paramValue);
                             include = true;
                         }
 
@@ -108,7 +105,7 @@
             $unwind: function (context, next) {
                 context.data.forEach(function (item, index) {
                     var key = context.param.slice(1);
-                    var values = evaluateFieldExpression(item, context.param);
+                    var values = context._.evaluateFieldExpression(item, context.param);
                     if (values !== null && Array.isArray(values)) {
                         for (var k = 0; k < values.length; k++) {
                             var clone = deepClone(item);
@@ -120,82 +117,82 @@
 
                 next();
             }
-        };
+        },
 
-        var defaultOperators = {
-            and: function (context) {
+        operators: {
+            $and: function (context) {
                 return context.value.reduce(function (p, criteria) {
-                    return p && test(context.data, criteria);
+                    return p && context._.test(context.data, criteria);
                 }, true);
             },
 
-            or: function (context) {
+            $or: function (context) {
                 return context.value.reduce(function (p, criteria) {
-                    return p || test(context.data, criteria);
+                    return p || context._.test(context.data, criteria);
                 }, false);
             },
 
-            nor: function (context) {
+            $nor: function (context) {
                 return context.value.reduce(function (p, criteria) {
-                    return p && !test(context.data, criteria);
+                    return p && !context._.test(context.data, criteria);
                 }, true);
             },
 
-            not: function (context) {
-                return !test(context.data, context.value);
+            $not: function (context) {
+                return !context._.test(context.data, context.value);
             },
 
-            eq: function (context) {
+            $eq: function (context) {
                 return deepCompare(context.data, context.value);
             },
 
-            ne: function (context) {
+            $ne: function (context) {
                 return !deepCompare(context.data, context.value);
             },
 
-            lt: function (context) {
+            $lt: function (context) {
                 return context.data < context.value;
             },
 
-            lte: function (context) {
+            $lte: function (context) {
                 return context.data <= context.value;
             },
 
-            gt: function (context) {
+            $gt: function (context) {
                 return context.data > context.value;
             },
 
-            gte: function (context) {
+            $gte: function (context) {
                 return context.data >= context.value;
             },
 
-            in: function (context) {
+            $in: function (context) {
                 var a = asArray(context.data);
                 return asArray(context.value).some(function (e) {
                     return a.indexOf(e) >= 0;
                 });
             },
 
-            nin: function (context) {
+            $nin: function (context) {
                 var a = asArray(context.data);
                 return asArray(context.value).every(function (e) {
                     return a.indexOf(e) < 0;
                 });
             },
 
-            exists: function (context) {
+            $exists: function (context) {
                 return !(context.value ^ (context.data !== null));
             },
 
-            type: function (context) {
+            $type: function (context) {
                 return typeof context.data === context.value;
             },
 
-            mod: function (context) {
+            $mod: function (context) {
                 return (context.data % context.value[0]) === context.value[1];
             },
 
-            regex: function (context) {
+            $regex: function (context) {
                 var r = context.value;
                 if (!(r instanceof RegExp)) {
                     r = new RegExp(r, context.criteria.$options);
@@ -204,162 +201,160 @@
                 return context.data.match(r) !== null;
             },
 
-            'options': true,
+            $options: noopHandler,
 
-            where: function (context) {
+            $where: function (context) {
                 return context.value.call(null, context.data);
             },
 
-            all: function (context) {
+            $all: function (context) {
                 var a = asArray(context.data);
                 return context.value.every(function (e) {
                     return a.indexOf(e) >= 0;
                 });
             },
 
-            elemMatch: function (context) {
+            $elemMatch: function (context) {
                 return Array.isArray(context.data) && context.data.some(function (e) {
-                    return test(e, context.value);
+                    return context._.test(e, context.value);
                 });
             },
 
-            size: function (context) {
+            $size: function (context) {
                 return context.value === (Array.isArray(context.data) ? context.data.length : 0);
+            }
+        }
+    };
+
+    var deepClone = function (obj) {
+        var clone = {};
+        if (obj === null) {
+            return null;
+        }
+
+        for (var key in obj) {
+            if (!obj.hasOwnProperty(key)) {
+                continue;
+            }
+
+            var value = obj[key];
+            if (value && typeof(value) === 'object') {
+                value = deepClone(value);
+            }
+
+            clone[key] = value;
+        }
+
+        return clone;
+    };
+
+    var resolve = function (obj, path) {
+        var paths = path.split('.');
+        for (var i = 0; i < paths.length; i++) {
+            if (typeof obj[paths[i]] === 'undefined') {
+                return null;
+            } else {
+                obj = obj[paths[i]];
+            }
+        }
+
+        return obj;
+    };
+
+    var getProperties = function (obj) {
+        var results = [];
+        for (var k in obj) {
+            if (!obj.hasOwnProperty(k)) {
+                continue;
+            }
+
+            results.push({
+                key: k,
+                value: obj[k]
+            });
+        }
+
+        return results;
+    };
+
+    var deepCompare = function (a, b) {
+        if ((a !== null) && (b !== null) && (typeof a === 'object') && (typeof b === 'object')) {
+            var aprops = getProperties(a);
+            var bprops = getProperties(b);
+
+            if (aprops.length === bprops.length) {
+                var sorter = function (x, y) {
+                    return x.key > y.key;
+                };
+
+                aprops.sort(sorter);
+                bprops.sort(sorter);
+                var i;
+                for (i = 0; i < aprops.length; i++) {
+                    var aprop = aprops[i];
+                    var bprop = bprop[i];
+                    if (!deepCompare(aprop.key, bprop.key) || !deepCompare(aprop.value, bprop.value)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return a === b;
+        }
+    };
+
+    var asArray = function (obj) {
+        return Array.isArray(obj) ? obj : [obj];
+    };
+
+    var defer = function (fn, args) {
+        args = args || [];
+        return setTimeout(function () {
+            fn.apply(null, args);
+        }, 0);
+    };
+
+    var Critr = (function () {
+        var Critr = function (options) {
+            options = options || {};
+            this.filters = {};
+            this.operators = {};
+
+            if (options.defaults) {
+                this.operators = Object.create(defaults.operators);
+            }
+
+            if (options.defaultFilters) {
+                this.filters = Object.create(defaults.filters);
             }
         };
 
-        var operators = {};
+        Critr.prototype.Critr = Critr;
 
-
-        function noopHandler() {
-            return true;
-        }
-
-        function deepClone(obj) {
-            var clone = {};
-            if (obj === null) {
-                return null;
-            }
-
-            for (var key in obj) {
-                if (!obj.hasOwnProperty(key)) {
-                    continue;
-                }
-
-                var value = obj[key];
-                if (value && typeof(value) === 'object') {
-                    value = deepClone(value);
-                }
-
-                clone[key] = value;
-            }
-
-            return clone;
-        }
-
-        function registerDefaults(overwrite) {
-            for (var key in defaultOperators) {
-                var handler = defaultOperators[key];
-                if (handler === true) {
-                    registerValueOp(key, overwrite);
-                } else {
-                    registerOp(key, handler, overwrite);
-                }
-            }
-        }
-
-        function registerOp(key, handler, overwrite) {
+        Critr.prototype.registerOp = function (key, handler, overwrite) {
             key = '$' + key;
-            if (key in operators) {
+            if (key in this.operators) {
                 if (overwrite) {
-                    operators[key] = handler;
+                    this.operators[key] = handler;
                 } else {
                     return false;
                 }
             } else {
-                operators[key] = handler;
+                this.operators[key] = handler;
             }
 
             return true;
-        }
+        };
 
-        function registerValueOp(key, overwrite) {
-            return registerOp(key, noopHandler, overwrite);
-        }
+        Critr.prototype.registerValueOp = function (key, overwrite) {
+            return this.registerOp(key, noopHandler, overwrite);
+        };
 
-        function clearRegistration() {
-            operators = {};
-        }
-
-        function resetOps() {
-            clearRegistration();
-            registerDefaults();
-        }
-
-        function resolve(obj, path) {
-            var paths = path.split('.');
-            for (var i = 0; i < paths.length; i++) {
-                if (typeof obj[paths[i]] === 'undefined') {
-                    return null;
-                } else {
-                    obj = obj[paths[i]];
-                }
-            }
-
-            return obj;
-        }
-
-        function getProperties(obj) {
-            var results = [];
-            for (var k in obj) {
-                if (!obj.hasOwnProperty(k)) {
-                    continue;
-                }
-
-                results.push({
-                    key: k,
-                    value: obj[k]
-                });
-            }
-
-            return results;
-        }
-
-        function deepCompare(a, b) {
-            if ((a !== null) && (b !== null) && (typeof a === 'object') && (typeof b === 'object')) {
-                var aprops = getProperties(a);
-                var bprops = getProperties(b);
-
-                if (aprops.length === bprops.length) {
-                    var sorter = function (x, y) {
-                        return x.key > y.key;
-                    };
-
-                    aprops.sort(sorter);
-                    bprops.sort(sorter);
-                    var i;
-                    for (i = 0; i < aprops.length; i++) {
-                        var aprop = aprops[i];
-                        var bprop = bprop[i];
-                        if (!deepCompare(aprop.key, bprop.key) || !deepCompare(aprop.value, bprop.value)) {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                return a === b;
-            }
-        }
-
-        function asArray(obj) {
-            return Array.isArray(obj) ? obj : [obj];
-        }
-
-        function test(data, criteria) {
+        Critr.prototype.test = function (data, criteria) {
             var result = false;
             for (var key in criteria) {
                 var value = criteria[key];
@@ -367,14 +362,15 @@
                     if (typeof value !== 'object') {
                         result = deepCompare(resolve(data, key), value);
                     } else {
-                        result = test(resolve(data, key), value);
+                        result = this.test(resolve(data, key), value);
                     }
                 } else {
-                    if (key in operators) {
-                        result = operators[key].call(null, {
+                    if (key in this.operators) {
+                        result = this.operators[key].call(this, {
                             value: value, 
                             data: data,
-                            criteria: criteria
+                            criteria: criteria,
+                            _: this
                         });
                     } else {
                         throw new Error(key + ' operator is not supported.');
@@ -387,16 +383,16 @@
             }
 
             return result;
-        }
+        };
 
-        function evaluateFieldExpression(obj, expression) {
+        Critr.prototype.evaluateFieldExpression = function (obj, expression) {
             return resolve(obj, expression.slice(1));
-        }
+        };
 
-        function evaluate(obj, expression) {
+        Critr.prototype.evaluate = function (obj, expression) {
             var result = null;
             if (typeof expression === 'string' && expression[0] === '$') {
-                result = evaluateFieldExpression(obj, expression);
+                result = this.evaluateFieldExpression(obj, expression);
             } else {
                 for (var key in expression) {
                     var value = expression[key];
@@ -408,9 +404,10 @@
             }
 
             return result;
-        }
+        };
 
-        function aggregate(data, operations, callback) {
+        Critr.prototype.aggregate = function (data, operations, callback) {
+            var _ = this;
             data = (data || []).slice(0);
             var operationIndex = -1;
 
@@ -442,7 +439,7 @@
                     }
 
                     var filterName = opFilters[filterIndex];
-                    var filter = $filters[filterName];
+                    var filter = _.filters[filterName];
                     if (!filter) {
                         // throw an error or something. `filterName` is not a known filter
                         return defer(nextFilter);
@@ -458,10 +455,11 @@
                         filterName: filterName,
                         param: filterParam,
                         output: output,
-                        outputAll: outputAll
+                        outputAll: outputAll,
+                        _: _
                     };
 
-                    filter.call(null, context, function () {
+                    filter.call(_, context, function () {
                         defer(nextFilter);
                     });
                 };
@@ -470,23 +468,19 @@
             };
 
             defer(nextOperation);
-        }
-
-        registerDefaults(true);
-        return {
-            registerDefaults: registerDefaults,
-            registerOp: registerOp,
-            registerValueOp: registerValueOp,
-            clearRegistration: clearRegistration,
-            resetOps: resetOps,
-            aggregate: aggregate,
-            test: test
         };
+
+        return Critr;
     })();
 
+    var instance = new Critr({
+        defaults: true,
+        defaultFilters: true
+    });
+
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = Critr;
+        module.exports = instance;
     } else {
-        this.Critr = Critr;
+        this.Critr = instance;
     }
 }).call(this);

@@ -5,7 +5,7 @@ var critr = require('../../src/critr');
 describe('Custom Ops:', function () {
     describe('register op', function () {
         beforeEach(function () {
-            critr.resetOps();
+            critr = new critr.Critr();
         });
 
         it('should prepend $ to all op registrations', function () {

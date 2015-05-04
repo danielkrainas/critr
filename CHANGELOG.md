@@ -5,5 +5,15 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased][unreleased]
 ### Added
 - This CHANGELOG file to hopefully capture any change notes
+- `evaluate` method to public interface.
+
+### Changed
+- The public interface into a type accessible via `<instance>.Critr`
+
+### Removed
+- `resetOps` for now. Create new instance of type for a clean state.
+- `clearRegistration` for now. Create new instance of type for a clean state.
+- `registerDefaults`. Create new instance of type with `defaults` and `defaultFilters` true.
+
 
 [unreleased]: https://github.com/danielkrainas/critr/compare/v0.1.0...HEAD
