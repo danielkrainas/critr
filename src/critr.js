@@ -200,7 +200,7 @@
             $unwind: function (context, next) {
                 context.forEachItem(function (item, index) {
                     var key = context.param.slice(1);
-                    var values = this.evaluateFieldExpression(item, context.param);
+                    var values = this.evaluate(item, context.param);
                     if (values !== null && Array.isArray(values)) {
                         for (var k = 0; k < values.length; k++) {
                             var clone = deepClone(item);
@@ -565,14 +565,10 @@
             return result;
         };
 
-        Critr.prototype.evaluateFieldExpression = function (obj, expression) {
-            return resolve(obj, expression.slice(1));
-        };
-
         Critr.prototype.evaluate = function (obj, expression) {
             var result = null;
             if (typeof expression === 'string' && expression[0] === '$') {
-                result = this.evaluateFieldExpression(obj, expression);
+                result = resolve(obj, expression.slice(1));
             } else {
                 for (var key in expression) {
                     var value = expression[key];

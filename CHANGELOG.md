@@ -27,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `clearRegistration` for now. Create new instance of type for a clean state.
 - `registerDefaults`. Create new instance of type with `defaults` and `defaultFilters` true.
 - `registerValueOp`. Simply create your own operator with a noop handler for these instances.
+- `evaluateFieldExpression`. Use `evaluate` for this operation now.
 
 
 [unreleased]: https://github.com/danielkrainas/critr/compare/v0.1.0...HEAD
