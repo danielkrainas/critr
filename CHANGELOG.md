@@ -21,6 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `evaluate` to support general operators.
 - `registerOps` to `operator`.
 - Operator registration no longer prepends '$' to names.
+- `aggregate` method to `pipe` for an easier to type name.
 
 ### Removed
 - `resetOps` for now. Create new instance of type for a clean state.

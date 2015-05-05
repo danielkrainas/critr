@@ -2,29 +2,8 @@ var chai = require('chai');
 var expect = chai.expect;
 var critr = require('../../src/critr');
 
-describe('Aggregation:', function () {
+describe('Stages:', function () {
     var data;
-
-    describe('piping', function () {
-        beforeEach(function () {
-            data = [
-                { name: 'bob' },
-                { name: 'fred' },
-                { name: 'john' }
-            ];
-        });
-
-        it('should return result after running data through $skip and $limit operations', function (done) {
-            critr.aggregate(data, [
-                { $skip: 1 },
-                { $limit: 1 }
-            ], function (result) {
-                expect(result).to.have.length(1);
-                expect(result[0]).to.equal(data[1]);
-                done();
-            });
-        });
-    });
 
     describe('$sort', function () {
 
@@ -37,7 +16,7 @@ describe('Aggregation:', function () {
         });
 
         it('should sort data in ascending order', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 { $sort: { name: 1 } }
             ], function (result) {
                 expect(result).to.have.length(3);
@@ -48,7 +27,7 @@ describe('Aggregation:', function () {
         });
 
         it('should sort data in descending order', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 { $sort: { name: -1 } }
             ], function (result) {
                 expect(result).to.have.length(3);
@@ -59,7 +38,7 @@ describe('Aggregation:', function () {
         });
 
         it('should sort data on multiple fields', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 {
                     $sort: {
                         name: 1,
@@ -86,7 +65,7 @@ describe('Aggregation:', function () {
 
         it('should output results to specified array', function (done) {
             var snapshot = [];
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 {
                     $project: {
                         newName: '$name'
@@ -117,7 +96,7 @@ describe('Aggregation:', function () {
         });
 
         it('should truncate data to length no greater than specified', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 {
                     $limit: 1
                 }
@@ -139,7 +118,7 @@ describe('Aggregation:', function () {
         });
 
         it('should skip specified number of elements', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 {
                     $skip: 1
                 }
@@ -161,7 +140,7 @@ describe('Aggregation:', function () {
         });
 
         it('should only return elements that match expression', function (done) {
-            var result = critr.aggregate(data, [
+            var result = critr.pipe(data, [
                 {
                     $match: { age: { $gt: 15 } }
                 }
@@ -182,7 +161,7 @@ describe('Aggregation:', function () {
         });
 
         it('should return multiple results with target value replaced with singular array elements', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 {
                     $unwind: '$kids'
                 }
@@ -205,7 +184,7 @@ describe('Aggregation:', function () {
         });
 
         it('should include fields that have a value of true', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 {
                     $project: {
                         name: true
@@ -220,7 +199,7 @@ describe('Aggregation:', function () {
         });
 
         it('should include fields that have a value of 1', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 {
                     $project: {
                         name: 1
@@ -235,7 +214,7 @@ describe('Aggregation:', function () {
         });
 
         it('should include fields that have a field expression string', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 {
                     $project: {
                         newName: '$name'
@@ -251,7 +230,7 @@ describe('Aggregation:', function () {
         });
 
         it('should include fields that have an expression object', function (done) {
-            critr.aggregate(data, [
+            critr.pipe(data, [
                 {
                     $project: {
                         name: {

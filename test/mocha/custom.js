@@ -60,7 +60,7 @@ describe('Custom Ops:', function () {
                 next();
             });
 
-            critr.aggregate(data, [{
+            critr.pipe(data, [{
                 $test: { name: 'bob' }
             }], function (result) {
                 expect(result).to.have.length(1);

@@ -589,7 +589,7 @@
             return result;
         };
 
-        Critr.prototype.aggregate = function (data, stages, callback) {
+        Critr.prototype.pipe = function (data, stages, callback) {
             data = (data || []).slice(0);
             var stageIndex = -1;
             var contextFactory = new StageContextFactory(this);
