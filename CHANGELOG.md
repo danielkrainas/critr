@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Code Climate badge to README.
 - get operation with `operator` method.
 - Custom stage operators using the `stage` method, similar to `operator` but for pipeline stage operators.
+- `$group` stage and accumulators.
+- Custom accumulator support via `accumulator` method.
+- `defaultAccumulators` initialization option.
 
 ### Changed
 - The public interface into a type accessible via `<instance>.Critr`
