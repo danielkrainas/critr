@@ -6,8 +6,103 @@
         return true;
     };
 
+    var bind = function (fn, thisArg) {
+        return function () {
+            var args = Array.prototype.slice.call(arguments, 0);
+            return fn.apply(thisArg, fn);
+        };
+    };
+
     var defaults = {
+        accumulators: {
+            $sum: function (data, expression) {
+                return data.reduce(bind(function (total, item) {
+                    return total + this.evaluate(item, expression);
+                }, this), 0);
+            },
+
+            $avg: function (data, expression) {
+                var total = defaults.accumulators.$sum(data, expression);
+                return total / data.length;
+            },
+
+            $first: function (data, expression) {
+                return this.evaluate(data[0], expression);
+            },
+
+            $last: function (data, expression) {
+                return this.evaluate(data[data.length - 1], expression);
+            },
+
+            $max: function (data, expression) {
+                return data.reduce(bind(function (max, item) {
+                    var value = this.evaluate(item, expression);
+                    return max === null ? value : Math.max(max, value);
+                }, this), null);
+            },
+
+            $min: function (data, expression) {
+                return data.reduce(bind(function (min, item) {
+                    var value = this.evaluate(item, expression);
+                    return min === null ? value : Math.min(min, value);
+                }, this), null);
+            },
+
+            $push: function (data, expression) {
+                return data.map(bind(function (item) {
+                    return this.evaluate(item, expression);
+                }, this));
+            },
+
+            $addToSet: function (data, expression) {
+                var set = [];
+                data.forEach(bind(function (item) {
+                    var value = this.evaluate(item, expression);
+                    if (set.indexOf(value) < 0) {
+                        set.push(value);
+                    }
+                }, this));
+
+                return set;
+            }
+        },
+
         stages: {
+            $group: function (context, next) {
+                var _idExpression = context.param._id || null;
+                var grouped = {};
+                context.forEachItem(function (item) {
+                    var _id = !_idExpression ? '' : this.evaluate(item, _idExpression);                    
+                    var group = grouped[_id] || [];
+                    group.push(item);
+                    grouped[_id] = group;
+                });
+
+                for (var groupKey in grouped) {
+                    var group = grouped[groupKey];
+                    var result = {};
+                    if (_idExpression !== null) {
+                        result._id = groupKey;
+                    }
+
+                    for (var key in context.param) {
+                        var param = context.param[key];
+                        var accumulatorKey = Object.keys(param)[0];
+                        var accumulator = this.accumulator(accumulatorKey);
+                        var expression = param[accumulatorKey];
+                        if (accumulator) {
+                            result[key] = accumulator.call(this, group, expression);
+                        } else {
+                            throw new Error(accumulatorKey + ' accumulator is not supported.');
+                        }
+                    }
+
+                    context.output(result);
+                }
+
+                next();
+            },
+
             $sort: function (context, next) {
                 var sorted = context.data.sort(function (a, b) {
                     for (var key in context.param) {
@@ -373,6 +468,7 @@
             options = options || {};
             this.stages = {};
             this.operators = {};
+            this.accumulators = {};
 
             if (options.defaults) {
                 this.operators = Object.create(defaults.operators);
@@ -381,9 +477,31 @@
             if (options.defaultStages) {
                 this.stages = Object.create(defaults.stages);
             }
+
+            if (options.defaultAccumulators) {
+                this.accumulators = Object.create(defaults.accumulators);
+            }
         };
 
         Critr.prototype.Critr = Critr;
+
+        Critr.prototype.accumulator = function (key, handler, overwrite) {
+            if (arguments.length === 1) {
+                return this.accumulators[key];
+            }
+
+            if (key in this.accumulators) {
+                if (overwrite) {
+                    this.accumulators[key] = handler;
+                } else {
+                    return false;
+                }
+            } else {
+                this.accumulators[key] = handler;
+            }
+
+            return true;
+        };
 
         Critr.prototype.registerOp = function (key, handler, overwrite) {
             key = '$' + key;
@@ -491,7 +609,8 @@
 
     var instance = new Critr({
         defaults: true,
-        defaultStages: true
+        defaultStages: true,
+        defaultAccumulators: true
     });
 
     if (typeof module !== 'undefined' && module.exports) {
