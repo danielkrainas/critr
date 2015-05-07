@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `$group` stage and accumulators.
 - Custom accumulator support via `accumulator` method.
 - `defaultAccumulators` initialization option.
+- `$toLower`, `$toUpper`, `$ifNull`, `$cond`, `$add`, `$subtract`, `$multiply`, `$divide` expression operators.
 
 ### Changed
 - The public interface into a type accessible via `<instance>.Critr`

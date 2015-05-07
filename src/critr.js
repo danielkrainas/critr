@@ -317,6 +317,60 @@
 
             $literal: function (context) {
                 return context.param;
+            },
+
+            $toLower: function (context) {
+                return context.param.toLowerCase();
+            },
+
+            $toUpper: function (context) {
+                return context.param.toUpperCase();
+            },
+
+            $ifNull: function (context) {
+                var result = this.evaluate(context.data, context.param[0]);
+                if (result !== null) {
+                    return result;
+                }
+
+                return this.evaluate(context.data, context.param[1]);
+            },
+
+            $cond: function (context) {
+                var result = this.evaluate(context.data, context.param.if);
+                if (result) {
+                    return this.evaluate(context.data, context.param.then);
+                } else {
+                    return this.evaluate(context.data, context.param.else);
+                }
+            },
+
+            $add: function (context) {
+                return context.param.reduce(bind(function (sum, expression) {
+                    return sum + this.evaluate(context.data, expression);
+                }, this), 0);
+            },
+
+            $subtract: function (context) {
+                return context.param.reduce(bind(function (diff, expression) {
+                    return diff - this.evaluate(context.data, expression);
+                }, this), 0);
+            },
+
+            $multiply: function (context) {
+                return context.param.reduce(bind(function (product, expression) {
+                    return product * this.evaluate(context.data, expression);
+                }, this), 1);
+            },
+
+            $divide: function (context) {
+                return context.param.reduce(bind(function (quotient, expression) {
+                    return quotient / this.evaluate(context.data, expression);
+                }, this), 1);
+            },
+
+            $mod: function (context) {
+                return this.evaluate(context.data, context.param[0]) % this.evaluate(context.data, context.param[1]);
             }
         }
     };
