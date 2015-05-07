@@ -293,7 +293,7 @@
                     r = new RegExp(r, context.expression.$options);
                 }
 
-                return context.data.match(r) !== null;
+                return context.data ? context.data.match(r) !== null : false;
             },
 
             $options: noopHandler,
