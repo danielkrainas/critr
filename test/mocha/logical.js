@@ -8,8 +8,8 @@ describe('Logical:', function () {
         it('should return true if all expressions are true', function () {
             expect(critr.test({ name: 'bob', age: 5 }, { 
                 $and: [
-                    {name: { $eq: 'bob'}}, 
-                    {age: {$eq: 5}}
+                    { name: 'bob' },
+                    { age: 5 }
                 ]
             })).to.be.true;
         });
@@ -17,8 +17,8 @@ describe('Logical:', function () {
         it('should return false if all expressions are false', function () {
             expect(critr.test({ name: 'bob', age: 5 }, { 
                 $and: [
-                    {name: { $eq: 'bob'}}, 
-                    {age: { $eq: 6 }}
+                    { name: 'bob' }, 
+                    { age: 6 }
                 ]
             })).to.be.false;
         });
@@ -28,8 +28,8 @@ describe('Logical:', function () {
         it('should return true if any expression is true', function () {
             expect(critr.test({ name: 'bob', age: 5 }, { 
                 $or: [
-                    {name: { $eq: 'bob'}}, 
-                    {age: {$eq: 4}}
+                    { name: 'bob' },
+                    { age: 4 }
                 ]
             })).to.be.true;
         });
@@ -37,8 +37,8 @@ describe('Logical:', function () {
         it('should return false if all expressions are false', function () {
             expect(critr.test({ name: 'fred', age: 5 }, { 
                 $or: [
-                    {name: { $eq: 'bob'}}, 
-                    {age: { $eq: 6 }}
+                    { name: 'bob' },
+                    { age: 6 }
                 ]
             })).to.be.false;
         });
@@ -46,8 +46,8 @@ describe('Logical:', function () {
         it('should return true if all expressions are true', function () {
             expect(critr.test({ name: 'bob', age: 5 }, { 
                 $or: [
-                    {name: { $eq: 'bob'}}, 
-                    {age: { $eq: 5 }}
+                    { name: 'bob' },
+                    { age: 5 }
                 ]
             })).to.be.true;
         });
@@ -57,8 +57,8 @@ describe('Logical:', function () {
         it('should return false if any expression is false', function () {
             expect(critr.test({ name: 'bob', age: 5 }, { 
                 $nor: [
-                    {name: { $eq: 'fred'}},
-                    {age: {$eq: 5}}
+                    { name: 'fred' },
+                    { age: 5 }
                 ]
             })).to.be.false;
         });
@@ -66,8 +66,8 @@ describe('Logical:', function () {
         it('should return true if all expressions are false', function () {
             expect(critr.test({ name: 'fred', age: 5 }, { 
                 $nor: [
-                    {name: { $eq: 'bob'}},
-                    {age: { $eq: 6 }}
+                    { name: 'bob' },
+                    { age: 6 }
                 ]
             })).to.be.true;
         });
@@ -75,8 +75,8 @@ describe('Logical:', function () {
         it('should return false if all expressions are true', function () {
             expect(critr.test({ name: 'bob', age: 5 }, {
                 $nor: [
-                    {name: { $eq: 'bob'}},
-                    {age: { $eq: 5 }}
+                    { name: 'bob' },
+                    { age: 5 }
                 ]
             })).to.be.false;
         });
@@ -86,7 +86,7 @@ describe('Logical:', function () {
         it('should return false if expression is true', function () {
             expect(critr.test({ name: 'bob', age: 5 }, {
                 $not: {
-                    age: { $eq: 5 }
+                    age: 5
                 }
             })).to.be.false;
         });
@@ -94,7 +94,7 @@ describe('Logical:', function () {
         it('should return true if expression is false', function () {
             expect(critr.test({ name: 'bob', age: 5 }, {
                 $not: {
-                    age: { $eq: 4 }
+                    age: 4
                 }
             })).to.be.true;
         });
