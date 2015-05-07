@@ -4,13 +4,13 @@ var critr = require('../../src/critr');
 
 describe('Fields:', function () {
     describe('$mod', function () {
-        it('should return true if remainder is the same', function () {
-            expect(critr.test({ age: 4 }, { age: { $mod: [2, 0]}})).to.be.true;
+        it('should return correct remainder', function () {
+            expect(critr.evaluate({}, { $mod: [5, 2] })).to.equal(1);
         });
 
-        it('should return false if remainder is not the same', function () {
-            expect(critr.test({ age: 5 }, { age: { $mod: [2, 0]}})).to.be.false;
-        });
+        /*it('should return false if remainder is not the same', function () {
+            expect(critr.evaluate({}, { $mod: [4, 2] })).to.equal(0);
+        });*/
     });
 
     describe('$regex', function () {
