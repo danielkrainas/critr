@@ -22,6 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `registerOps` to `operator`.
 - Operator registration no longer prepends '$' to names.
 - `aggregate` method to `pipe` for an easier to type name.
+` Operator context property `value` to `param`
 
 ### Removed
 - `resetOps` for now. Create new instance of type for a clean state.

@@ -216,79 +216,75 @@
 
         operators: {
             $and: function (context) {
-                return context.value.reduce(function (p, expression) {
-                    return p && context._.test(context.data, expression);
-                }, true);
+                return context.param.reduce(bind(function (last, expression) {
+                    return last && this.test(context.data, expression);
+                }, this), true);
             },
 
             $or: function (context) {
-                return context.value.reduce(function (p, expression) {
-                    return p || context._.test(context.data, expression);
-                }, false);
+                return context.param.reduce(bind(function (last, expression) {
+                    return last || this.test(context.data, expression);
+                }, this), false);
             },
 
             $nor: function (context) {
-                return context.value.reduce(function (p, expression) {
-                    return p && !context._.test(context.data, expression);
-                }, true);
+                return context.param.reduce(bind(function (last, expression) {
+                    return last && !this.test(context.data, expression);
+                }, this), true);
             },
 
             $not: function (context) {
-                return !context._.test(context.data, context.value);
+                return !this.test(context.data, context.param);
             },
 
             $eq: function (context) {
-                return deepCompare(context.data, context.value);
+                return deepCompare(context.data, context.param);
             },
 
             $ne: function (context) {
-                return !deepCompare(context.data, context.value);
+                return !deepCompare(context.data, context.param);
             },
 
             $lt: function (context) {
-                return context.data < context.value;
+                return context.data < context.param;
             },
 
             $lte: function (context) {
-                return context.data <= context.value;
+                return context.data <= context.param;
             },
 
             $gt: function (context) {
-                return context.data > context.value;
+                return context.data > context.param;
             },
 
             $gte: function (context) {
-                return context.data >= context.value;
+                return context.data >= context.param;
             },
 
             $in: function (context) {
                 var a = asArray(context.data);
-                return asArray(context.value).some(function (e) {
+                return asArray(context.param).some(function (e) {
                     return a.indexOf(e) >= 0;
                 });
             },
 
             $nin: function (context) {
                 var a = asArray(context.data);
-                return asArray(context.value).every(function (e) {
+                return asArray(context.param).every(function (e) {
                     return a.indexOf(e) < 0;
                 });
             },
 
             $exists: function (context) {
-                return !(context.value ^ (context.data !== null));
+                return !(context.param ^ (context.data !== null));
             },
 
             $type: function (context) {
-                return typeof context.data === context.value;
-            },
-
-            $mod: function (context) {
-                return (context.data % context.value[0]) === context.value[1];
+                return typeof context.data === context.param;
             },
 
             $regex: function (context) {
-                var r = context.value;
+                var r = context.param;
                 if (!(r instanceof RegExp)) {
                     r = new RegExp(r, context.expression.$options);
                 }
@@ -299,28 +295,28 @@
             $options: noopHandler,
 
             $where: function (context) {
-                return context.value.call(null, context.data);
+                return context.param.call(null, context.data);
             },
 
             $all: function (context) {
                 var a = asArray(context.data);
-                return context.value.every(function (e) {
+                return context.param.every(function (e) {
                     return a.indexOf(e) >= 0;
                 });
             },
 
             $elemMatch: function (context) {
                 return Array.isArray(context.data) && context.data.some(function (e) {
-                    return this.test(e, context.value);
+                    return this.test(e, context.param);
                 }, this);
             },
 
             $size: function (context) {
-                return context.value === (Array.isArray(context.data) ? context.data.length : 0);
+                return context.param === (Array.isArray(context.data) ? context.data.length : 0);
             },
 
             $literal: function (context) {
-                return context.value;
+                return context.param;
             }
         }
     };
@@ -546,15 +542,25 @@
         Critr.prototype.test = function (data, criteria) {
             var result = false;
             for (var key in criteria) {
-                var value = criteria[key];
+                var param = criteria[key];
+                var target = data ? resolve(data, key) : null;
                 if (key[0] !== '$') {
-                    if (typeof value !== 'object') {
-                        result = deepCompare(resolve(data, key), value);
-                    } else {
-                        result = this.test(resolve(data, key), value);
+                    if (typeof param !== 'object') {
+                        result = param === target;
+                    } else if (param) {
+                        result = this.test(target, param);
                     }
                 } else {
-                    result = !!this.evaluate(data, criteria);
+                    var operator = this.operator(key);
+                    if (operator) {
+                        result = !!operator.call(this, {
+                            param: param,
+                            data: data,
+                            expression: criteria
+                        });
+                    } else {
+                        throw new Error(key + ' operator is not supported.');
+                    }
                 }
 
                 if (!result) {
@@ -573,11 +579,11 @@
                 result = expression;
             } else {
                 for (var key in expression) {
-                    var value = expression[key];
+                    var param = expression[key];
                     var operator = this.operator(key);
                     if (operator) {
                         result = operator.call(this, {
-                            value: value,
+                            param: param,
                             data: obj,
                             expression: expression,
                             _: this
