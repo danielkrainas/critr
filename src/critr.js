@@ -585,8 +585,7 @@
                         result = operator.call(this, {
                             param: param,
                             data: obj,
-                            expression: expression,
-                            _: this
+                            expression: expression
                         });
                     } else {
                         throw new Error(key + ' operator is not supported.');
