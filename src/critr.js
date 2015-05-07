@@ -311,8 +311,8 @@
 
             $elemMatch: function (context) {
                 return Array.isArray(context.data) && context.data.some(function (e) {
-                    return context._.test(e, context.value);
-                });
+                    return this.test(e, context.value);
+                }, this);
             },
 
             $size: function (context) {
