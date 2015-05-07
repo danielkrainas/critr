@@ -569,6 +569,8 @@
             var result = null;
             if (typeof expression === 'string' && expression[0] === '$') {
                 result = resolve(obj, expression.slice(1));
+            } else if (typeof expression === 'number') {
+                result = expression;
             } else {
                 for (var key in expression) {
                     var value = expression[key];
