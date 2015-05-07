@@ -9,7 +9,7 @@
     var bind = function (fn, thisArg) {
         return function () {
             var args = Array.prototype.slice.call(arguments, 0);
-            return fn.apply(thisArg, fn);
+            return fn.apply(thisArg, args);
         };
     };
 
