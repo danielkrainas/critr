@@ -79,20 +79,21 @@
 
             $sort: function (context, next) {
                 var sorted = context.data.sort(function (a, b) {
-                    for (var key in context.param) {
+                    for (var i = 0; i < context.paramKeys.length; i++) {
+                        var key = context.paramKeys[i];
                         var av = a[key];
                         var bv = b[key];
 
-                        var r = 0;
+                        var result = 0;
                         if (av < bv) {
-                            r = -1;
+                            result = -1;
                         } else if (av > bv) {
-                            r = 1;
+                            result = 1;
                         }
 
-                        r *= context.param[key];
-                        if (r !== 0) {
-                            return r;
+                        result *= context.param[key];
+                        if (result !== 0) {
+                            return result;
                         }
                     }
 
@@ -105,7 +106,7 @@
 
             $output: function (context, next) {
                 if (context.param && context.param.push) {
-                    context.forEachItem(function (item, index) {
+                    context.forEachItem(function (item) {
                         context.param.push(item);
                         context.output(item);
                     });
@@ -135,7 +136,7 @@
             },
 
             $match: function (context, next) {
-                context.forEachItem(function (item, index) {
+                context.forEachItem(function (item) {
                     if (this.test(item, context.param)) {
                         context.output(item);
                     }
@@ -145,10 +146,9 @@
             },
 
             $project: function (context, next) {
-                context.forEachItem(function (item, index) {
+                context.forEachItem(function (item) {
                     var result = {};
-                    for (var key in context.param) {
-                        var paramValue = context.param[key];
+                    context.forEachParamKey(function (key, paramValue) {
                         var include = false;
                         var value = item[key];
                         if (paramValue === true || paramValue === 1) {
@@ -163,7 +163,7 @@
                         if (include) {
                             result[key] = value;
                         }
-                    }
+                    });
 
                     context.output(result);
                 });
@@ -172,7 +172,7 @@
             },
 
             $unwind: function (context, next) {
-                context.forEachItem(function (item, index) {
+                context.forEachItem(function (item) {
                     var key = context.param.slice(1);
                     var values = this.evaluate(item, context.param);
                     if (values !== null && Array.isArray(values)) {
@@ -385,6 +385,10 @@
     };
 
     var getProperties = function (obj) {
+        if (typeof obj !== 'object') {
+            return [];
+        }
+
         var results = [];
         for (var k in obj) {
             if (!obj.hasOwnProperty(k)) {
@@ -453,6 +457,7 @@
             this.name = operatorName;
             this.param = stage[operatorName];
             this.critr = critr;
+            this.paramKeys = typeof this.param === 'object' ? Object.keys(this.param) : [];
         };
 
         StageContext.prototype.forEachItem = function (fn) {
@@ -477,6 +482,14 @@
             var context = this;
             this.operator.call(this.critr, this, function () {
                 callback(context.results);
+            });
+        };
+
+        StageContext.prototype.forEachParamKey = function (fn) {
+            var critr = this.critr;
+            var param = this.param;
+            this.paramKeys.forEach(function (key) {
+                fn.call(critr, key, param[key]);
             });
         };
 
@@ -570,6 +583,10 @@
         Critr.prototype.test = function (data, criteria) {
             var result = false;
             for (var key in criteria) {
+                if (!criteria.hasOwnProperty(key)) {
+                    continue;
+                }
+
                 var param = criteria[key];
                 var target = data ? resolve(data, key) : null;
                 if (key[0] !== '$') {
@@ -607,6 +624,10 @@
                 result = expression;
             } else {
                 for (var key in expression) {
+                    if (!expression.hasOwnProperty(key)) {
+                        continue;
+                    }
+
                     var param = expression[key];
                     var operator = this.operator(key);
                     if (operator) {

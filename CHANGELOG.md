@@ -15,6 +15,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `$toLower`, `$toUpper`, `$ifNull`, `$cond`, `$add`, `$subtract`, `$multiply`, `$divide` expression operators.
 - `group` method to public interface.
 - `count` method to public interface.
+- `paramKeys` array property to stage context.
+- `forEachParamKey` method to stage context.
 
 ### Changed
 - The public interface into a type accessible via `<instance>.Critr`
