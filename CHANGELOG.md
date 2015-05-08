@@ -28,6 +28,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Operator registration no longer prepends '$' to names.
 - `aggregate` method to `pipe` for an easier to type name.
 - Operator context property `value` to `param`
+- Licensing terms and details. Critr is now dedicated to the public domain. See [UNLICENSE][unlicense].
 
 ### Removed
 - `resetOps` for now. Create new instance of type for a clean state.
@@ -38,3 +39,5 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 
 [unreleased]: https://github.com/danielkrainas/critr/compare/v0.1.0...HEAD
+
+[unlicense]: https://github.com/danielkrainas/critr/blob/master/UNLICENSE

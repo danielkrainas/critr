@@ -26,7 +26,7 @@
     "name": "Daniel Krainas",
     "email": "me@danielkrainas.com"
   },
-  "license": "MIT",
+  "license": "Unlicense",
   "dependencies": {},
   "devDependencies": {
     "bower": "~1.3.12",

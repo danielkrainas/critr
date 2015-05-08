@@ -273,8 +273,13 @@ If you see a bug or have a suggestion, feel free to open an issue [here](https:/
 
 ## Contributions
 
-PR's welcome! There are no strict style guidelines, just follow best practices and try to keep with the general look & feel of the code present. All submissions must pass jslint and have a test to verify *(if applicable)*.
+PR's welcome! There are no strict style guidelines, just follow best practices and try to keep with the general look & feel of the code present. All submissions must pass jshint and have a test to verify *(if applicable)*.
 
 ## License
 
-[MIT License](http://opensource.org/licenses/MIT). Copyright 2015 Daniel Krainas [http://www.danielkrainas.com](http://www.danielkrainas.com)
+[Unlicense](http://unlicense.org/UNLICENSE). This is a Public Domain work. 
+
+[![Public Domain](https://licensebuttons.net/p/mark/1.0/88x31.png)](http://questioncopyright.org/promise)
+
+> ["Make art not law"](http://questioncopyright.org/make_art_not_law_interview)
+> - Nina Paley
