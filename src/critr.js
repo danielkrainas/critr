@@ -17,6 +17,10 @@
         accumulators: {
             $sum: function (data, expression) {
                 return data.reduce(bind(function (total, item) {
+                    if (typeof expression === 'number') {
+                        return total + expression;
+                    }
+
                     return total + this.evaluate(item, expression);
                 }, this), 0);
             },
@@ -69,37 +73,7 @@
 
         stages: {
             $group: function (context, next) {
-                var _idExpression = context.param._id || null;
-                var grouped = {};
-                context.forEachItem(function (item) {
-                    var _id = !_idExpression ? '' : this.evaluate(item, _idExpression);                    
-                    var group = grouped[_id] || [];
-                    group.push(item);
-                    grouped[_id] = group;
-                });
-
-                for (var groupKey in grouped) {
-                    var group = grouped[groupKey];
-                    var result = {};
-                    if (_idExpression !== null) {
-                        result._id = groupKey;
-                    }
-
-                    for (var key in context.param) {
-                        var param = context.param[key];
-                        var accumulatorKey = Object.keys(param)[0];
-                        var accumulator = this.accumulator(accumulatorKey);
-                        var expression = param[accumulatorKey];
-                        if (accumulator) {
-                            result[key] = accumulator.call(this, group, expression);
-                        } else {
-                            throw new Error(accumulatorKey + ' accumulator is not supported.');
-                        }
-                    }
-
-                    context.output(result);
-                }
-
+                context.outputAll(this.group(context.data, context.param));
                 next();
             },
 
@@ -678,6 +652,53 @@
             };
 
             defer(nextStage);
+        };
+
+        Critr.prototype.group = function (data, expression) {
+            var _idExpression = expression._id || null;
+            var grouped = {};
+            var results = [];
+            data.forEach(function (item) {
+                var _id = !_idExpression ? '' : this.evaluate(item, _idExpression);
+                var group = grouped[_id] || [];
+                group.push(item);
+                grouped[_id] = group;
+            }, this);
+
+            for (var groupKey in grouped) {
+                var group = grouped[groupKey];
+                var result = {};
+                if (_idExpression !== null) {
+                    result._id = groupKey;
+                }
+
+                for (var key in expression) {
+                    if (key === _idExpression) {
+                        continue;
+                    }
+
+                    var param = expression[key];
+                    var accumulatorKey = Object.keys(param)[0];
+                    var accumulator = this.accumulator(accumulatorKey);
+                    var expression = param[accumulatorKey];
+                    if (accumulator) {
+                        result[key] = accumulator.call(this, group, expression);
+                    } else {
+                        throw new Error(accumulatorKey + ' accumulator is not supported.');
+                    }
+                }
+
+                results.push(result);
+            }
+
+            return results;
+        };
+
+        Critr.prototype.count = function (data, query) {
+            data = asArray(data);
+            return data.reduce(bind(function (last, item) {
+                return this.test(item, query) ? last + 1 : last;
+            }, this), 0);
         };
 
         return Critr;

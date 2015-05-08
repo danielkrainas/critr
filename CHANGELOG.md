@@ -13,6 +13,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Custom accumulator support via `accumulator` method.
 - `defaultAccumulators` initialization option.
 - `$toLower`, `$toUpper`, `$ifNull`, `$cond`, `$add`, `$subtract`, `$multiply`, `$divide` expression operators.
+- `group` method to public interface.
+- `count` method to public interface.
 
 ### Changed
 - The public interface into a type accessible via `<instance>.Critr`
