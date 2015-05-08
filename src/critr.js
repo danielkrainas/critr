@@ -680,9 +680,9 @@
                     var param = expression[key];
                     var accumulatorKey = Object.keys(param)[0];
                     var accumulator = this.accumulator(accumulatorKey);
-                    var expression = param[accumulatorKey];
+                    var accumulatorExpression = param[accumulatorKey];
                     if (accumulator) {
-                        result[key] = accumulator.call(this, group, expression);
+                        result[key] = accumulator.call(this, group, accumulatorExpression);
                     } else {
                         throw new Error(accumulatorKey + ' accumulator is not supported.');
                     }
