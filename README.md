@@ -14,7 +14,7 @@ using **bower**:
 
 	$ bower install critr
 
-or by downloading scripts directly from the project's **dist** folder:
+or by downloading scripts directly from the project's **dist** folder (updated every [release](https://github.com/danielkrainas/critr/releases)):
 
 - unminified: `dist/critr.js`
 - minified: `dist/critr.min.js`
