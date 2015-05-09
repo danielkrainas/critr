@@ -83,14 +83,6 @@ if (result) {
 
 ---
 
-#### `void registerDefaults()`
-
-Register all built-in operators.
-
-**Note:** The operators are registered using `registerOp` with the `overwrite` option set to **true**. Any previously-registered operators with a key matching any built-in operator will be overridden.  
-
----
-
 #### `bool registerOp(string key, function handler[, bool overwrite = false])`
 
 Register a custom operator that matches ('$' + `key`) and executes `handler`. The `overwrite` flag, false by default, allows you to override any previously registered operator with the same key. The return value indicates if the operator was registered successfully.
@@ -121,90 +113,6 @@ var success = Critr.registerOp('foo', function (value, doc, criteria) {
 });
 
 var result = Critr.test({ name: 'bob', age: 21 }, { age: { $foo: true }});
-```
-
----
-
-#### `bool registerValueOp(string key[, bool overwrite])`
-
-Register an operator that is itself not evaluated but meant to be used by another operator, such as the built-in `$options` operator. The operator and its value will be skipped/ignored by `test` when it is encountered. The `overwrite` flag, false by default, allows you to override any previously registered operator with the same key. The return value indicates if the operator was registered successfully.
-
-**Note:** All keys are prepended with '$' internally so registering a key of `operator` will match `$operator` when used with `test`.
-
-**Note:** All registered operators(value and evaluated operators) are tracked in the same lookup map and, as such, a value operator of `foo` will collide with a `foo` operator registered with `registerOp`.
-
-##### NodeJS:
-
-```js
-var critr = require('critr');
-
-var success = critr.registerValueOp('fooOptions');
-
-var result = critr.test({ name: 'bob', age: 21 }, { $fooOptions: {}, age: { $eq: 21 }});
-```
-
-##### Browser:
-
-```js
-var success = Critr.registerValueOp('fooOptions');
-
-var result = Critr.test({ name: 'bob', age: 21 }, { $fooOptions: {}, age: { $eq: 21 }});
-```
-
----
-
-#### `void clearRegistration()`
-
-Removes **all** registered operators including built-in operators. Use `registerDefaults` if you would like to re-register the built-in operators afterwards or `resetOps` to remove only non-built-in operators. 
-
-##### NodeJS:
-
-```js
-var critr = require('critr');
-
-critr.clearRegistration();
-
-// This will throw an error because the operator $eq is not registered
-critr.test({ name: 'bob', age: 21 }, { age: { $eq true }});
-```
-
-##### Browser:
-
-```js
-Critr.clearRegistration();
-
-// This will throw an error because the operator $eq is not registered
-Critr.test({ name: 'bob', age: 21 }, { age: { $eq: true }});
-```
-
----
-
-#### `void resetOps()`
-
-Removes all previously registered operators and re-registers the built-in ones.  
-
-##### NodeJS:
-
-```js
-var critr = require('critr');
-
-critr.registerValueOp('fooOptions');
-
-critr.resetOps();
-
-// This will throw an error because the operator $fooOptions is no longer registered
-critr.test({ name: 'bob', age: 21 }, { $fooOptions: {}, age: { $eq: 21 }});
-```
-
-##### Browser:
-
-```js
-Critr.registerValueOp('fooOptions');
-
-Critr.resetOps();
-
-// This will throw an error because the operator $fooOptions is no longer registered
-Critr.test({ name: 'bob', age: 21 }, { $fooOptions: {}, age: { $eq: 21 }});
 ```
 
 ## Built-in Operators
