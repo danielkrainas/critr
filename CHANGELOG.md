@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - This CHANGELOG file to hopefully capture any change notes
 - `evaluate` method to public interface.
-- Code Climate badge to README.
+- CodeClimate badge to README.
 - get operation with `operator` method.
 - Custom stage operators using the `stage` method, similar to `operator` but for pipeline stage operators.
 - `$group` stage and accumulators.
