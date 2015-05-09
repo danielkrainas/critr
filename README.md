@@ -1,6 +1,6 @@
 #Critr
 
-[![Quality](https://codeclimate.com/github/danielkrainas/critr/badges/gpa.svg)](https://codeclimate.com/github/danielkrainas/critr)
+[![Quality](https://codeclimate.com/github/danielkrainas/critr/badges/gpa.svg)](https://codeclimate.com/github/danielkrainas/critr) [ ![Build](https://img.shields.io/codeship/cb52b7f0-d81e-0132-f585-769405cfda59/master.svg)](https://codeship.com/projects/78841)
 
 A NodeJS/browser compatible criteria evaluation library utilizing a flexible and extensible MongoDB-like query syntax.
 
