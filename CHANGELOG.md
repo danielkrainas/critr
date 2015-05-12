@@ -18,6 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `paramKeys` array property to stage context.
 - `forEachParamKey` method to stage context.
 - Build status shield to README
+- Code coverage status shield to README
 
 ### Changed
 - The public interface into a type accessible via `<instance>.Critr`
