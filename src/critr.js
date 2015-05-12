@@ -690,9 +690,17 @@
             }, this);
 
             var groupProperties = getProperties(grouped);
-            var expressionProperties = getProperties(expression).filter(function (p) {
+            var accumulators = getProperties(expression).filter(function (p) {
                 return !_idExpression || p.key !== _idExpression;
-            });
+            }).map(function (expressionProperty) {
+                var key = Object.keys(expressionProperty.value)[0];
+                return {
+                    accumulatorKey: key,
+                    accumulator: this.accumulator(key),
+                    accumulatorExpression: expressionProperty.value[key],
+                    expressionProperty: expressionProperty
+                };
+            }, this);
 
             groupProperties.forEach(function (property) {
                 var group = grouped[property.key];
@@ -701,15 +709,12 @@
                     result._id = property.key;
                 }
 
-                expressionProperties.forEach(function (expressionProperty) {
-                    var accumulatorKey = Object.keys(expressionProperty.value)[0];
-                    var accumulator = this.accumulator(accumulatorKey);
-                    var accumulatorExpression = param[accumulatorKey];
-                    if (accumulator) {
-                        result[expressionProperty.key] = accumulator.call(this, property.value, accumulatorExpression);
+                accumulators.forEach(function (a) {
+                    if (a.accumulator) {
+                        result[a.expressionProperty.key] = a.accumulator.call(this, a.expressionProperty.value, a.accumulatorExpression);
                     } else {
-                        throw new Error(accumulatorKey + ' accumulator is not supported.');
-                    }                    
+                        throw new Error(a.accumulatorKey + ' accumulator is not supported.');
+                    }
                 });
 
                 results.push(result);
