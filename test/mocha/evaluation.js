@@ -25,6 +25,10 @@ describe('Fields:', function () {
         it('should return true if pattern is RegExp instance and matches', function () {
             expect(critr.test({ name: 'bob' }, { name: {$regex: /b.+b/ }})).to.be.true;
         });
+
+        it('should use flags in $options parameter', function () {
+            expect(critr.test({ name: 'bob' }, { name: { $regex: 'B.+B', $options: 'i' }})).to.be.true;
+        });
     });
 
     describe('$where', function () {
@@ -44,6 +48,34 @@ describe('Fields:', function () {
             expect(critr.test({ name: 'bob' }, { name: { $where: function (v) {
                 return false;
             }}})).to.be.false;
+        });
+    });
+
+    describe('$toLower', function () {
+        it('should convert expression value to lowercase', function () {
+            expect(critr.evaluate({ name: 'HELLO' }, { $toLower: '$name' })).to.equal('hello');
+        });
+    });
+
+    describe('$toUpper', function () {
+        it('should convert expression value to uppercase', function () {
+            expect(critr.evaluate({ name: 'hello' }, { $toUpper: '$name' })).to.equal('HELLO');
+        });
+    });
+
+    describe('$ifNull', function () {
+        it('should evaluate param[1] if evaluated param[0] is null', function () {
+            expect(critr.evaluate({ name: null, age: 5 }, { $ifNull: ['$name', '$age']})).to.equal(5);
+        });
+
+        it('should return evaluated param[0] if value is not null', function () {
+            expect(critr.evaluate({ name: 'bob', age: 5 }, { $ifNull: ['$name', '$age']})).to.equal('bob');
+        });
+    });
+
+    describe('$add', function () {
+        it ('should return the product of parameter expressions', function () {
+            expect(critr.evaluate({ age: 5, parentsAge: 2 }, { $add: ['$age', '$parentsAge', 2]})).to.equal(9);
         });
     });
 });

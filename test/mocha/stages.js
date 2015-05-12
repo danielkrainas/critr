@@ -244,5 +244,21 @@ describe('Stages:', function () {
                 done();
             });
         });
+
+        it('should ignore fields that are false or 0', function (done) {
+            critr.pipe(data, [
+                {
+                    $project: {
+                        name: 0,
+                        age: 1
+                    }
+                }
+            ], function (result) {
+                expect(result).to.have.length(2);
+                expect(result[0]).to.not.have.property('name');
+                expect(result[0]).to.have.property('age');
+                done();
+            });
+        });
     });
 });

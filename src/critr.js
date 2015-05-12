@@ -4,6 +4,7 @@
 (function () {
 
     var noopHandler = function () {
+        /* istanbul ignore next  */
         return true;
     };
 
@@ -295,11 +296,11 @@
             },
 
             $toLower: function (context) {
-                return context.param.toLowerCase();
+                return (this.evaluate(context.data, context.param) || '').toLowerCase();
             },
 
             $toUpper: function (context) {
-                return context.param.toUpperCase();
+                return (this.evaluate(context.data, context.param) || '').toUpperCase();
             },
 
             $ifNull: function (context) {
@@ -352,11 +353,13 @@
 
     var deepClone = function (obj) {
         var clone = {};
+        /* istanbul ignore if  */
         if (obj === null) {
             return null;
         }
 
         for (var key in obj) {
+            /* istanbul ignore if  */
             if (!obj.hasOwnProperty(key)) {
                 continue;
             }
@@ -664,7 +667,7 @@
 
                 if (!context.operator) {
                     // throw an error or something. `operatorName` is not a known filter
-                    return defer(nextStage);
+                    throw new Error(context.operatorName + ' is not a known stage operator.');
                 }
 
                 context.callOperator(function (results) {
@@ -688,6 +691,10 @@
             }, this);
 
             for (var groupKey in grouped) {
+                if (!grouped.hasOwnProperty(groupKey)) {
+                    continue;
+                }
+
                 var group = grouped[groupKey];
                 var result = {};
                 if (_idExpression !== null) {
@@ -695,7 +702,7 @@
                 }
 
                 for (var key in expression) {
-                    if (key === _idExpression) {
+                    if (key === _idExpression || !expression.hasOwnProperty(key)) {
                         continue;
                     }
 
