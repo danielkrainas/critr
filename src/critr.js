@@ -666,7 +666,6 @@
                 });
 
                 if (!context.operator) {
-                    // throw an error or something. `operatorName` is not a known filter
                     throw new Error(context.operatorName + ' is not a known stage operator.');
                 }
 
@@ -690,35 +689,31 @@
                 grouped[_id] = group;
             }, this);
 
-            for (var groupKey in grouped) {
-                if (!grouped.hasOwnProperty(groupKey)) {
-                    continue;
-                }
+            var groupProperties = getProperties(grouped);
+            var expressionProperties = getProperties(expression).filter(function (p) {
+                return !_idExpression || p.key !== _idExpression;
+            });
 
-                var group = grouped[groupKey];
+            groupProperties.forEach(function (property) {
+                var group = grouped[property.key];
                 var result = {};
                 if (_idExpression !== null) {
-                    result._id = groupKey;
+                    result._id = property.key;
                 }
 
-                for (var key in expression) {
-                    if (key === _idExpression || !expression.hasOwnProperty(key)) {
-                        continue;
-                    }
-
-                    var param = expression[key];
-                    var accumulatorKey = Object.keys(param)[0];
+                expressionProperties.forEach(function (expressionProperty) {
+                    var accumulatorKey = Object.keys(expressionProperty.value)[0];
                     var accumulator = this.accumulator(accumulatorKey);
                     var accumulatorExpression = param[accumulatorKey];
                     if (accumulator) {
-                        result[key] = accumulator.call(this, group, accumulatorExpression);
+                        result[expressionProperty.key] = accumulator.call(this, property.value, accumulatorExpression);
                     } else {
                         throw new Error(accumulatorKey + ' accumulator is not supported.');
-                    }
-                }
+                    }                    
+                });
 
                 results.push(result);
-            }
+            });
 
             return results;
         };
@@ -739,6 +734,7 @@
         defaultAccumulators: true
     });
 
+    /* istanbul ignore else */
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = instance;
     } else {
