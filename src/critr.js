@@ -533,7 +533,7 @@
 
     Critr.prototype.Critr = Critr;
 
-    Critr.prototype.stage = makeOperatorStorageFn('stage');
+    Critr.prototype.stage = makeOperatorStorageFn('stages');
     Critr.prototype.accumulator = makeOperatorStorageFn('accumulators');
     Critr.prototype.operator = makeOperatorStorageFn('operators');
 
@@ -619,7 +619,7 @@
             });
 
             if (!context.operator) {
-                throw new Error(context.operatorName + ' is not a known stage operator.');
+                throw new Error(context.name + ' is not a known stage operator.');
             }
 
             context.callOperator(function (results) {
