@@ -1,3 +1,5 @@
+"use strict";
+
 exports.bind = function (fn, thisArg) {
     return function () {
         var args = Array.prototype.slice.call(arguments, 0);

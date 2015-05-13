@@ -1,3 +1,6 @@
+"use strict";
+/*jslint bitwise: true*/
+
 var utils = require('./utils');
 
 var noopHandler = function () {
@@ -82,7 +85,7 @@ exports.$regex = function (context) {
     return context.data ? context.data.match(r) !== null : false;
 };
 
-exports.$options = noopHandler,
+exports.$options = noopHandler;
 
 exports.$where = function (context) {
     return context.param.call(null, context.data);

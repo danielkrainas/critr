@@ -1,3 +1,5 @@
+"use strict";
+
 var utils = require('./utils');
 
 exports.$sum = function (data, expression) {
@@ -53,4 +55,4 @@ exports.$addToSet = function (data, expression) {
     }, this));
 
     return set;
-}
+};

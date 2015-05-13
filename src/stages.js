@@ -1,3 +1,5 @@
+"use strict";
+
 var utils = require('./utils');
 
 exports.$group = function (context, next) {

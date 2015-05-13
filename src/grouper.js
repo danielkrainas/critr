@@ -1,3 +1,5 @@
+"use strict";
+
 var Grouper = function (_idExpression) {
     this._idExpression = _idExpression;
     this.lookup = {};

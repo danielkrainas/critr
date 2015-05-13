@@ -1,5 +1,4 @@
 "use strict";
-/*jslint bitwise: true*/
 
 var utils = require('./utils');
 var Grouper = require('./grouper');

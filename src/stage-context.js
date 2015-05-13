@@ -1,3 +1,5 @@
+"use strict";
+
 var StageContext = function (stage, data, critr) {
     var operatorName = Object.keys(stage)[0];
 
