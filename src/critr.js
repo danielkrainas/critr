@@ -22,6 +22,19 @@ var map = function (arr, fn, thisArg) {
     return result;
 };
 
+var getProperties = function (obj) {
+    if (typeof obj !== 'object' || !obj) {
+        return [];
+    }
+
+    return map(Object.keys(obj), function (key) {
+        return {
+            key: key,
+            value: obj[key]
+        };
+    });
+};
+
 var deepClone = function (obj) {
     /* istanbul ignore if  */
     if (obj === null) {
@@ -51,19 +64,6 @@ var resolve = function (obj, path) {
     }
 
     return obj;
-};
-
-var getProperties = function (obj) {
-    if (typeof obj !== 'object' || !obj) {
-        return [];
-    }
-
-    return map(Object.keys(obj), function (key) {
-        return {
-            key: key,
-            value: obj[key]
-        };
-    });
 };
 
 var keySorter = function (a, b) {
