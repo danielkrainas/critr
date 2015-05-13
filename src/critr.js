@@ -22,6 +22,107 @@ var map = function (arr, fn, thisArg) {
     return result;
 };
 
+var deepClone = function (obj) {
+    /* istanbul ignore if  */
+    if (obj === null) {
+        return null;
+    }
+
+    var clone = {};
+    getProperties(obj).forEach(function (p) {
+        if (p.value && typeof p.value === 'object') {
+            p.value = deepClone(p.value);
+        }
+
+        clone[p.key] = p.value;
+    });
+
+    return clone;
+};
+
+var resolve = function (obj, path) {
+    var paths = path.split('.');
+    for (var i = 0; i < paths.length; i++) {
+        if (typeof obj[paths[i]] === 'undefined') {
+            return null;
+        }
+
+        obj = obj[paths[i]];
+    }
+
+    return obj;
+};
+
+var getProperties = function (obj) {
+    if (typeof obj !== 'object' || !obj) {
+        return [];
+    }
+
+    return map(Object.keys(obj), function (key) {
+        return {
+            key: key,
+            value: obj[key]
+        };
+    });
+};
+
+var keySorter = function (a, b) {
+    return a.key > b.key;
+};
+
+var deepCompare = function (a, b) {
+    if (a === null || typeof a !== 'object') {
+        return a === b;
+    }
+
+    var aprops = getProperties(a);
+    var bprops = getProperties(b);
+    if (aprops.length !== bprops.length) {
+        return false;
+    }
+
+    aprops.sort(keySorter);
+    bprops.sort(keySorter);
+    for (var i = 0; i < aprops.length; i++) {
+        if (aprops[i].key !== bprops[i].key || !deepCompare(aprops[i].value, bprops[i].value)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+var asArray = function (obj) {
+    return Array.isArray(obj) ? obj : [obj];
+};
+
+var defer = function (fn, args) {
+    return setTimeout(function () {
+        fn.apply(null, args || []);
+    }, 0);
+};
+
+var makeOperatorStorageFn = function (containerName) {
+    return function (key, handler, overwrite) {
+        var container = this[containerName];
+        if (arguments.length === 1) {
+            return container[key];
+        }
+
+        if (key in container) {
+            if (overwrite) {
+                container[key] = handler;
+            } else {
+                return false;
+            }
+        } else {
+            container[key] = handler;
+        }
+
+        return true;
+    };
+};
+
 var defaults = {
     accumulators: {
         $sum: function (data, expression) {
@@ -353,107 +454,6 @@ var defaults = {
             return this.evaluate(context.data, context.param[0]) % this.evaluate(context.data, context.param[1]);
         }
     }
-};
-
-var deepClone = function (obj) {
-    /* istanbul ignore if  */
-    if (obj === null) {
-        return null;
-    }
-
-    var clone = {};
-    getProperties(obj).forEach(function (p) {
-        if (p.value && typeof p.value === 'object') {
-            p.value = deepClone(p.value);
-        }
-
-        clone[p.key] = p.value;
-    });
-
-    return clone;
-};
-
-var resolve = function (obj, path) {
-    var paths = path.split('.');
-    for (var i = 0; i < paths.length; i++) {
-        if (typeof obj[paths[i]] === 'undefined') {
-            return null;
-        }
-
-        obj = obj[paths[i]];
-    }
-
-    return obj;
-};
-
-var getProperties = function (obj) {
-    if (typeof obj !== 'object' || !obj) {
-        return [];
-    }
-
-    return map(Object.keys(obj), function (key) {
-        return {
-            key: key,
-            value: obj[key]
-        };
-    });
-};
-
-var keySorter = function (a, b) {
-    return a.key > b.key;
-};
-
-var deepCompare = function (a, b) {
-    if (a === null || typeof a !== 'object') {
-        return a === b;
-    }
-
-    var aprops = getProperties(a);
-    var bprops = getProperties(b);
-    if (aprops.length !== bprops.length) {
-        return false;
-    }
-
-    aprops.sort(keySorter);
-    bprops.sort(keySorter);
-    for (var i = 0; i < aprops.length; i++) {
-        if (aprops[i].key !== bprops[i].key || !deepCompare(aprops[i].value, bprops[i].value)) {
-            return false;
-        }
-    }
-
-    return true;
-};
-
-var asArray = function (obj) {
-    return Array.isArray(obj) ? obj : [obj];
-};
-
-var defer = function (fn, args) {
-    return setTimeout(function () {
-        fn.apply(null, args || []);
-    }, 0);
-};
-
-var makeOperatorStorageFn = function (containerName) {
-    return function (key, handler, overwrite) {
-        var container = this[containerName];
-        if (arguments.length === 1) {
-            return container[key];
-        }
-
-        if (key in container) {
-            if (overwrite) {
-                container[key] = handler;
-            } else {
-                return false;
-            }
-        } else {
-            container[key] = handler;
-        }
-
-        return true;
-    };
 };
 
 var Grouper = function (_idExpression) {
