@@ -334,8 +334,9 @@
 
             $subtract: function (context) {
                 return context.param.reduce(bind(function (diff, expression) {
-                    return diff - this.evaluate(context.data, expression);
-                }, this), 0);
+                    var value = this.evaluate(context.data, expression);
+                    return diff === null ? value : diff - value;
+                }, this), null);
             },
 
             $multiply: function (context) {
@@ -388,7 +389,7 @@
     };
 
     var getProperties = function (obj) {
-        if (typeof obj !== 'object') {
+        if (typeof obj !== 'object' || !obj) {
             return [];
         }
 
@@ -405,7 +406,7 @@
     };
 
     var deepCompare = function (a, b) {
-        if ((a && b) === null || typeof a !== 'object') {
+        if (a === null || typeof a !== 'object') {
             return a === b;
         }
 
@@ -455,6 +456,40 @@
 
             return true;
         };
+    };
+
+    var Grouper = function (_idExpression) {
+        this._idExpression = _idExpression;
+        this.lookup = {};
+        this.ids = [];
+    };
+
+    Grouper.prototype.makeFilter = function () {
+        var grouper = this;
+        return function (item) {
+            var _id = this.evaluate(item, grouper._idExpression);
+            if (grouper.ids.indexOf(_id) < 0) {
+                grouper.ids.push(_id);
+                grouper.lookup[_id] = [item];
+            } else {
+                grouper.lookup[_id].push(item);
+            }
+        };
+    };
+
+    Grouper.prototype.groups = function (fn, thisArg) {
+        for (var i = 0; i < this.ids.length; i++) {
+            fn.call(thisArg, this.ids[i], this.lookup[this.ids[i]]);
+        }
+    };
+
+    Grouper.prototype.map = function (fn, thisArg) {
+        var results = [];
+        for (var i = 0; i < this.ids.length; i++) {
+            results.push(fn.call(thisArg, this.ids[i], this.lookup[this.ids[i]]));
+        }
+
+        return results;
     };
 
     var StageContext = function (stage, data, critr) {
@@ -539,29 +574,26 @@
 
     Critr.prototype.test = function (data, criteria) {
         var result = false;
-        for (var key in criteria) {
-            if (!criteria.hasOwnProperty(key)) {
-                continue;
-            }
-
-            var param = criteria[key];
-            var target = data ? resolve(data, key) : null;
-            if (key[0] !== '$') {
-                if (typeof param !== 'object') {
-                    result = param === target;
-                } else if (param) {
-                    result = this.test(target, param);
+        var properties = getProperties(criteria);
+        while(properties.length > 0) {
+            var p = properties.shift();
+            var target = data ? resolve(data, p.key) : null;
+            if (p.key[0] !== '$') {
+                if (typeof p.value !== 'object') {
+                    result = p.value === target;
+                } else if (p.value) {
+                    result = this.test(target, p.value);
                 }
             } else {
-                var operator = this.operator(key);
+                var operator = this.operator(p.key);
                 if (operator) {
                     result = !!operator.call(this, {
-                        param: param,
+                        param: p.value,
                         data: data,
                         expression: criteria
                     });
                 } else {
-                    throw new Error(key + ' operator is not supported.');
+                    throw new Error(p.key + ' operator is not supported.');
                 }
             }
 
@@ -632,21 +664,11 @@
     };
 
     Critr.prototype.group = function (data, expression) {
-        var _idExpression = expression._id || '';
-        var grouped = {};
-        var results = [];
-        var groupKeys = [];
-        data.forEach(function (item) {
-            var _id = !_idExpression ? '' : this.evaluate(item, _idExpression);
-            var group = grouped[_id] || [];
-            group.push(item);
-            grouped[_id] = group;
-        }, this);
-
-        var groupProperties = getProperties(grouped);
-        var accumulators = getProperties(expression).filter(function (p) {
-            return !_idExpression || p.key !== _idExpression;
-        }).map(function (expressionProperty) {
+        var grouper = new Grouper(expression._id || '');
+        data.forEach(grouper.makeFilter(), this);
+        var accumulators = map(getProperties(expression).filter(function (p) {
+            return !grouper._idExpression || p.key !== grouper._idExpression;
+        }), function (expressionProperty) {
             var key = Object.keys(expressionProperty.value)[0];
             return {
                 accumulatorKey: key,
@@ -656,10 +678,9 @@
             };
         }, this);
 
-        groupKeys.forEach(function (groupKey) {
-            var group = grouped[groupKey];
+        return grouper.map(function (groupKey, group) {
             var result = {};
-            if (_idExpression !== null) {
+            if (grouper._idExpression !== null) {
                 result._id = groupKey;
             }
 
@@ -671,10 +692,8 @@
                 }
             });
 
-            results.push(result);
-        });
-
-        return results;
+            return result;
+        }, this);
     };
 
     Critr.prototype.count = function (data, query) {
