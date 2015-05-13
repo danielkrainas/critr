@@ -39,7 +39,19 @@ module.exports = function(grunt) {
         },
         concat: {
             options: {
-                banner: '/*!\n * <%= pkg.name %> <%= pkg.version %>. (<%= pkg.homepage %>)\n * Copyright <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>\n */\n\n'
+                banner: '/*!\n * <%= pkg.name %> <%= pkg.version %>. (<%= pkg.homepage %>)\n * Copyright <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>\n */\n\n',
+                process: function (src) {
+                    return ['(function (module) {', src, '})(function (root) {',
+                            'if (typeof exports === \'undefined\') {',
+                                'return Object.defineProperty({}, \'exports\', {',
+                                    'set: function (i) { root[\'critr\'] = i; },',
+                                    'get: function () { return root[\'critr\']; }',
+                                '});',
+                            '}',
+                            'return module;',
+                        '})(this);'
+                    ].join('\n');
+                }
             },
             dist: {
                 src: 'src/<%= pkg.name %>.js',
