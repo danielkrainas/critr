@@ -74,26 +74,52 @@ describe('Fields:', function () {
     });
 
     describe('$add', function () {
-        it ('should return the sum of parameter expressions', function () {
+        it('should return the sum of parameter expressions', function () {
             expect(critr.evaluate({ age: 5, parentsAge: 2 }, { $add: ['$age', '$parentsAge', 2]})).to.equal(9);
         });
     });
 
     describe('$subtract', function () {
-        it ('should return the difference of parameter expressions', function () {
+        it('should return the difference of parameter expressions', function () {
             expect(critr.evaluate({ age: 5, parentsAge: 2 }, { $subtract: ['$age', '$parentsAge', 2]})).to.equal(1);
         });
     });
 
     describe('$multiply', function () {
-        it ('should return the product of parameter expressions', function () {
+        it('should return the product of parameter expressions', function () {
             expect(critr.evaluate({ age: 5, parentsAge: 2 }, { $multiply: ['$age', '$parentsAge', 2]})).to.equal(20);
         });
     });
 
     describe('$divide', function () {
-        it ('should return the quotient of parameter expressions', function () {
+        it('should return the quotient of parameter expressions', function () {
             expect(critr.evaluate({ age: 20 }, { $divide: ['$age', 2, 5]})).to.equal(2);
+        });
+    });
+
+    describe('$cond', function () {
+        it('should evaluate condition and return then case if result is truthy', function () {
+            expect(critr.evaluate({ age: 20 },
+                {
+                    $cond: {
+                        if: { age: 20 },
+                        then: { $literal: 2 },
+                        else: { $literal: 1 }
+                    }
+                }
+            )).to.equal(2);
+        });
+
+        it('should evaluate condition and return else case if result is falsey', function () {
+            expect(critr.evaluate({ age: 20 },
+                {
+                    $cond: {
+                        if: { age: 1 },
+                        then: { $literal: 2 },
+                        else: { $literal: 1 }
+                    }
+                }
+            )).to.equal(1);
         });
     });
 });

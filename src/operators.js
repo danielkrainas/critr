@@ -126,7 +126,7 @@ exports.$ifNull = function (context) {
 };
 
 exports.$cond = function (context) {
-    var result = this.evaluate(context.data, context.param.if);
+    var result = this.test(context.data, context.param.if);
     if (result) {
         return this.evaluate(context.data, context.param.then);
     } else {

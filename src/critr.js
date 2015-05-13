@@ -176,7 +176,7 @@ Critr.prototype.group = function (data, expression) {
             } else {
                 throw new Error(a.accumulatorKey + ' accumulator is not supported.');
             }
-        });
+        }, this);
 
         return result;
     }, this);

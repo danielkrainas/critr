@@ -33,3 +33,5 @@ Grouper.prototype.map = function (fn, thisArg) {
 
     return results;
 };
+
+module.exports = Grouper;
