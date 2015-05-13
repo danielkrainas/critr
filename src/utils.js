@@ -69,8 +69,8 @@ exports.deepCompare = function (a, b) {
         return a === b;
     }
 
-    exports.aprops = getProperties(a);
-    exports.bprops = getProperties(b);
+    var aprops = getProperties(a);
+    var bprops = getProperties(b);
     if (aprops.length !== bprops.length) {
         return false;
     }

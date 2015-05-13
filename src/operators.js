@@ -155,8 +155,9 @@ exports.$multiply = function (context) {
 
 exports.$divide = function (context) {
     return context.param.reduce(utils.bind(function (quotient, expression) {
-        return quotient / this.evaluate(context.data, expression);
-    }, this), 1);
+        var value = this.evaluate(context.data, expression);
+        return quotient === null ? value : quotient / value;
+    }, this), null);
 };
 
 exports.$mod = function (context) {
