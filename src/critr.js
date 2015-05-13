@@ -436,6 +436,27 @@
         }, 0);
     };
 
+    var makeOperatorStorageFn = function (containerName) {
+        return function (key, handler, overwrite) {
+            var container = this[containerName];
+            if (arguments.length === 1) {
+                return container[key];
+            }
+
+            if (key in container) {
+                if (overwrite) {
+                    container[key] = handler;
+                } else {
+                    return false;
+                }
+            } else {
+                container[key] = handler;
+            }
+
+            return true;
+        };
+    };
+
     var StageContext = function (stage, data, critr) {
         var operatorName = Object.keys(stage)[0];
 
@@ -512,59 +533,9 @@
 
     Critr.prototype.Critr = Critr;
 
-    Critr.prototype.stage = function (key, handler, overwrite) {
-        if (arguments.length === 1) {
-            return this.stages[key];
-        }
-
-        if (key in this.stages) {
-            if (overwrite) {
-                this.stages[key] = handler;
-            } else {
-                return false;
-            }
-        } else {
-            this.stages[key] = handler;
-        }
-
-        return true;
-    };
-
-    Critr.prototype.accumulator = function (key, handler, overwrite) {
-        if (arguments.length === 1) {
-            return this.accumulators[key];
-        }
-
-        if (key in this.accumulators) {
-            if (overwrite) {
-                this.accumulators[key] = handler;
-            } else {
-                return false;
-            }
-        } else {
-            this.accumulators[key] = handler;
-        }
-
-        return true;
-    };
-
-    Critr.prototype.operator = function (key, handler, overwrite) {
-        if (arguments.length === 1) {
-            return this.operators[key];
-        }
-
-        if (key in this.operators) {
-            if (overwrite) {
-                this.operators[key] = handler;
-            } else {
-                return false;
-            }
-        } else {
-            this.operators[key] = handler;
-        }
-
-        return true;
-    };
+    Critr.prototype.stage = makeOperatorStorageFn('stage');
+    Critr.prototype.accumulator = makeOperatorStorageFn('accumulators');
+    Critr.prototype.operator = makeOperatorStorageFn('operators');
 
     Critr.prototype.test = function (data, criteria) {
         var result = false;
@@ -685,7 +656,7 @@
             };
         }, this);
 
-        groupKey.forEach(function (groupKey) {
+        groupKeys.forEach(function (groupKey) {
             var group = grouped[groupKey];
             var result = {};
             if (_idExpression !== null) {
