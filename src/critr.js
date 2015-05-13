@@ -15,6 +15,15 @@
         };
     };
 
+    var map = function (arr, fn, thisArg) {
+        var result = [];
+        for (var i = 0; i < arr.length; i++) {
+            result.push(fn.call(thisArg, arr[i], i));
+        }
+
+        return result;
+    };
+
     var defaults = {
         accumulators: {
             $sum: function (data, expression) {
@@ -305,11 +314,7 @@
 
             $ifNull: function (context) {
                 var result = this.evaluate(context.data, context.param[0]);
-                if (result !== null) {
-                    return result;
-                }
-
-                return this.evaluate(context.data, context.param[1]);
+                return result !== null ? result : this.evaluate(context.data, context.param[1]);
             },
 
             $cond: function (context) {
@@ -352,25 +357,19 @@
     };
 
     var deepClone = function (obj) {
-        var clone = {};
         /* istanbul ignore if  */
         if (obj === null) {
             return null;
         }
 
-        for (var key in obj) {
-            /* istanbul ignore if  */
-            if (!obj.hasOwnProperty(key)) {
-                continue;
+        var clone = {};
+        getProperties(obj).forEach(function (p) {
+            if (p.value && typeof p.value === 'object') {
+                p.value = deepClone(p.value);
             }
 
-            var value = obj[key];
-            if (value && typeof(value) === 'object') {
-                value = deepClone(value);
-            }
-
-            clone[key] = value;
-        }
+            clone[p.key] = p.value;
+        });
 
         return clone;
     };
@@ -380,9 +379,9 @@
         for (var i = 0; i < paths.length; i++) {
             if (typeof obj[paths[i]] === 'undefined') {
                 return null;
-            } else {
-                obj = obj[paths[i]];
             }
+
+            obj = obj[paths[i]];
         }
 
         return obj;
@@ -393,49 +392,38 @@
             return [];
         }
 
-        var results = [];
-        for (var k in obj) {
-            if (!obj.hasOwnProperty(k)) {
-                continue;
-            }
+        return map(Object.keys(obj), function (key) {
+            return {
+                key: key,
+                value: obj[key]
+            };
+        });
+    };
 
-            results.push({
-                key: k,
-                value: obj[k]
-            });
-        }
-
-        return results;
+    var keySorter = function (a, b) {
+        return a.key > b.key;
     };
 
     var deepCompare = function (a, b) {
-        if ((a !== null) && (b !== null) && (typeof a === 'object') && (typeof b === 'object')) {
-            var aprops = getProperties(a);
-            var bprops = getProperties(b);
-
-            if (aprops.length === bprops.length) {
-                var sorter = function (x, y) {
-                    return x.key > y.key;
-                };
-
-                aprops.sort(sorter);
-                bprops.sort(sorter);
-                var i;
-                for (i = 0; i < aprops.length; i++) {
-                    var aprop = aprops[i];
-                    var bprop = bprop[i];
-                    if (!deepCompare(aprop.key, bprop.key) || !deepCompare(aprop.value, bprop.value)) {
-                        return false;
-                    }
-                }
-
-                return true;
-            } else {
-                return false;
-            }
-        } else {
+        if ((a && b) === null || typeof a !== 'object') {
             return a === b;
         }
+
+        var aprops = getProperties(a);
+        var bprops = getProperties(b);
+        if (aprops.length !== bprops.length) {
+            return false;
+        }
+
+        aprops.sort(keySorter);
+        bprops.sort(keySorter);
+        for (var i = 0; i < aprops.length; i++) {
+            if (aprops[i].key !== bprops[i].key || !deepCompare(aprops[i].value, bprops[i].value)) {
+                return false;
+            }
+        }
+
+        return true;
     };
 
     var asArray = function (obj) {
@@ -443,295 +431,287 @@
     };
 
     var defer = function (fn, args) {
-        args = args || [];
         return setTimeout(function () {
-            fn.apply(null, args);
+            fn.apply(null, args || []);
         }, 0);
     };
 
-    var StageContextFactory = (function () {
-        var StageContext = function (stage, data, critr) {
-            var operatorName = Object.keys(stage)[0];
+    var StageContext = function (stage, data, critr) {
+        var operatorName = Object.keys(stage)[0];
 
-            this.results = [];
-            this.data = data;
-            this.count = data.length;
-            this.stage = stage;
-            this.operator = critr.stage(operatorName);
-            this.name = operatorName;
-            this.param = stage[operatorName];
-            this.critr = critr;
-            this.paramKeys = typeof this.param === 'object' ? Object.keys(this.param) : [];
-        };
+        this.results = [];
+        this.data = data;
+        this.count = data.length;
+        this.stage = stage;
+        this.operator = critr.stage(operatorName);
+        this.name = operatorName;
+        this.param = stage[operatorName];
+        this.critr = critr;
+        this.paramKeys = typeof this.param === 'object' ? Object.keys(this.param) : [];
+    };
 
-        StageContext.prototype.forEachItem = function (fn) {
-            var critr = this.critr;
-            this.data.forEach(function (item, index) {
-                fn.call(critr, item, index);
-            });
-        };
+    StageContext.prototype.forEachItem = function (fn) {
+        var critr = this.critr;
+        this.data.forEach(function (item, index) {
+            fn.call(critr, item, index);
+        });
+    };
 
-        StageContext.prototype.outputAll = function (result) {
-            result = result || [];
-            this.results = this.results.concat(result);
-        };
+    StageContext.prototype.outputAll = function (result) {
+        result = result || [];
+        this.results = this.results.concat(result);
+    };
 
-        StageContext.prototype.output = function (result) {
-            if (result !== null) {
-                this.results.push(result);
-            }            
-        };
+    StageContext.prototype.output = function (result) {
+        if (result !== null) {
+            this.results.push(result);
+        }            
+    };
 
-        StageContext.prototype.callOperator = function (callback) {
-            var context = this;
-            this.operator.call(this.critr, this, function () {
-                callback(context.results);
-            });
-        };
+    StageContext.prototype.callOperator = function (callback) {
+        var context = this;
+        this.operator.call(this.critr, this, function () {
+            callback(context.results);
+        });
+    };
 
-        StageContext.prototype.forEachParamKey = function (fn) {
-            var critr = this.critr;
-            var param = this.param;
-            this.paramKeys.forEach(function (key) {
-                fn.call(critr, key, param[key]);
-            });
-        };
+    StageContext.prototype.forEachParamKey = function (fn) {
+        var critr = this.critr;
+        var param = this.param;
+        this.paramKeys.forEach(function (key) {
+            fn.call(critr, key, param[key]);
+        });
+    };
 
-        var StageContextFactory = function (critr) {
-            this.critr = critr;
-        };
+    var StageContextFactory = function (critr) {
+        this.critr = critr;
+    };
 
-        StageContextFactory.prototype.create = function (options) {           
-            return new StageContext(options.stage, options.data, this.critr);
-        };
+    StageContextFactory.prototype.create = function (options) {           
+        return new StageContext(options.stage, options.data, this.critr);
+    };
 
-        return StageContextFactory;
-    })();
+    var Critr = function (options) {
+        options = options || {};
+        this.stages = {};
+        this.operators = {};
+        this.accumulators = {};
 
-    var Critr = (function () {
-        var Critr = function (options) {
-            options = options || {};
-            this.stages = {};
-            this.operators = {};
-            this.accumulators = {};
+        if (options.defaults) {
+            this.operators = Object.create(defaults.operators);
+        }
 
-            if (options.defaults) {
-                this.operators = Object.create(defaults.operators);
-            }
+        if (options.defaultStages) {
+            this.stages = Object.create(defaults.stages);
+        }
 
-            if (options.defaultStages) {
-                this.stages = Object.create(defaults.stages);
-            }
+        if (options.defaultAccumulators) {
+            this.accumulators = Object.create(defaults.accumulators);
+        }
+    };
 
-            if (options.defaultAccumulators) {
-                this.accumulators = Object.create(defaults.accumulators);
-            }
-        };
+    Critr.prototype.Critr = Critr;
 
-        Critr.prototype.Critr = Critr;
+    Critr.prototype.stage = function (key, handler, overwrite) {
+        if (arguments.length === 1) {
+            return this.stages[key];
+        }
 
-        Critr.prototype.stage = function (key, handler, overwrite) {
-            if (arguments.length === 1) {
-                return this.stages[key];
-            }
-
-            if (key in this.stages) {
-                if (overwrite) {
-                    this.stages[key] = handler;
-                } else {
-                    return false;
-                }
-            } else {
+        if (key in this.stages) {
+            if (overwrite) {
                 this.stages[key] = handler;
-            }
-
-            return true;
-        };
-
-        Critr.prototype.accumulator = function (key, handler, overwrite) {
-            if (arguments.length === 1) {
-                return this.accumulators[key];
-            }
-
-            if (key in this.accumulators) {
-                if (overwrite) {
-                    this.accumulators[key] = handler;
-                } else {
-                    return false;
-                }
             } else {
+                return false;
+            }
+        } else {
+            this.stages[key] = handler;
+        }
+
+        return true;
+    };
+
+    Critr.prototype.accumulator = function (key, handler, overwrite) {
+        if (arguments.length === 1) {
+            return this.accumulators[key];
+        }
+
+        if (key in this.accumulators) {
+            if (overwrite) {
                 this.accumulators[key] = handler;
+            } else {
+                return false;
+            }
+        } else {
+            this.accumulators[key] = handler;
+        }
+
+        return true;
+    };
+
+    Critr.prototype.operator = function (key, handler, overwrite) {
+        if (arguments.length === 1) {
+            return this.operators[key];
+        }
+
+        if (key in this.operators) {
+            if (overwrite) {
+                this.operators[key] = handler;
+            } else {
+                return false;
+            }
+        } else {
+            this.operators[key] = handler;
+        }
+
+        return true;
+    };
+
+    Critr.prototype.test = function (data, criteria) {
+        var result = false;
+        for (var key in criteria) {
+            if (!criteria.hasOwnProperty(key)) {
+                continue;
             }
 
-            return true;
-        };
-
-        Critr.prototype.operator = function (key, handler, overwrite) {
-            if (arguments.length === 1) {
-                return this.operators[key];
-            }
-
-            if (key in this.operators) {
-                if (overwrite) {
-                    this.operators[key] = handler;
-                } else {
-                    return false;
+            var param = criteria[key];
+            var target = data ? resolve(data, key) : null;
+            if (key[0] !== '$') {
+                if (typeof param !== 'object') {
+                    result = param === target;
+                } else if (param) {
+                    result = this.test(target, param);
                 }
             } else {
-                this.operators[key] = handler;
+                var operator = this.operator(key);
+                if (operator) {
+                    result = !!operator.call(this, {
+                        param: param,
+                        data: data,
+                        expression: criteria
+                    });
+                } else {
+                    throw new Error(key + ' operator is not supported.');
+                }
             }
 
-            return true;
-        };
+            if (!result) {
+                break;
+            }
+        }
 
-        Critr.prototype.test = function (data, criteria) {
-            var result = false;
-            for (var key in criteria) {
-                if (!criteria.hasOwnProperty(key)) {
+        return result;
+    };
+
+    Critr.prototype.evaluate = function (obj, expression) {
+        var result = null;
+        if (typeof expression === 'string' && expression[0] === '$') {
+            result = resolve(obj, expression.slice(1));
+        } else if (typeof expression === 'number') {
+            result = expression;
+        } else {
+            for (var key in expression) {
+                if (!expression.hasOwnProperty(key)) {
                     continue;
                 }
 
-                var param = criteria[key];
-                var target = data ? resolve(data, key) : null;
-                if (key[0] !== '$') {
-                    if (typeof param !== 'object') {
-                        result = param === target;
-                    } else if (param) {
-                        result = this.test(target, param);
-                    }
+                var param = expression[key];
+                var operator = this.operator(key);
+                if (operator) {
+                    result = operator.call(this, {
+                        param: param,
+                        data: obj,
+                        expression: expression
+                    });
                 } else {
-                    var operator = this.operator(key);
-                    if (operator) {
-                        result = !!operator.call(this, {
-                            param: param,
-                            data: data,
-                            expression: criteria
-                        });
-                    } else {
-                        throw new Error(key + ' operator is not supported.');
-                    }
-                }
-
-                if (!result) {
-                    break;
+                    throw new Error(key + ' operator is not supported.');
                 }
             }
+        }
 
-            return result;
-        };
+        return result;
+    };
 
-        Critr.prototype.evaluate = function (obj, expression) {
-            var result = null;
-            if (typeof expression === 'string' && expression[0] === '$') {
-                result = resolve(obj, expression.slice(1));
-            } else if (typeof expression === 'number') {
-                result = expression;
-            } else {
-                for (var key in expression) {
-                    if (!expression.hasOwnProperty(key)) {
-                        continue;
-                    }
+    Critr.prototype.pipe = function (data, stages, callback) {
+        data = (data || []).slice(0);
+        var stageIndex = -1;
+        var contextFactory = new StageContextFactory(this);
 
-                    var param = expression[key];
-                    var operator = this.operator(key);
-                    if (operator) {
-                        result = operator.call(this, {
-                            param: param,
-                            data: obj,
-                            expression: expression
-                        });
-                    } else {
-                        throw new Error(key + ' operator is not supported.');
-                    }
-                }
+        var nextStage = function () {
+            if (++stageIndex >= stages.length) {
+                return callback(data);
             }
 
-            return result;
-        };
-
-        Critr.prototype.pipe = function (data, stages, callback) {
-            data = (data || []).slice(0);
-            var stageIndex = -1;
-            var contextFactory = new StageContextFactory(this);
-
-            var nextStage = function () {
-                if (++stageIndex >= stages.length) {
-                    return callback(data);
-                }
-
-                var stage = stages[stageIndex];
-                var context = contextFactory.create({
-                    stage: stage,
-                    data: data
-                });
-
-                if (!context.operator) {
-                    throw new Error(context.operatorName + ' is not a known stage operator.');
-                }
-
-                context.callOperator(function (results) {
-                    data = results;
-                    defer(nextStage);
-                });
-            };
-
-            defer(nextStage);
-        };
-
-        Critr.prototype.group = function (data, expression) {
-            var _idExpression = expression._id || null;
-            var grouped = {};
-            var results = [];
-            data.forEach(function (item) {
-                var _id = !_idExpression ? '' : this.evaluate(item, _idExpression);
-                var group = grouped[_id] || [];
-                group.push(item);
-                grouped[_id] = group;
-            }, this);
-
-            var groupProperties = getProperties(grouped);
-            var accumulators = getProperties(expression).filter(function (p) {
-                return !_idExpression || p.key !== _idExpression;
-            }).map(function (expressionProperty) {
-                var key = Object.keys(expressionProperty.value)[0];
-                return {
-                    accumulatorKey: key,
-                    accumulator: this.accumulator(key),
-                    accumulatorExpression: expressionProperty.value[key],
-                    expressionProperty: expressionProperty
-                };
-            }, this);
-
-            groupProperties.forEach(function (property) {
-                var group = grouped[property.key];
-                var result = {};
-                if (_idExpression !== null) {
-                    result._id = property.key;
-                }
-
-                accumulators.forEach(function (a) {
-                    if (a.accumulator) {
-                        result[a.expressionProperty.key] = a.accumulator.call(this, a.expressionProperty.value, a.accumulatorExpression);
-                    } else {
-                        throw new Error(a.accumulatorKey + ' accumulator is not supported.');
-                    }
-                });
-
-                results.push(result);
+            var stage = stages[stageIndex];
+            var context = contextFactory.create({
+                stage: stage,
+                data: data
             });
 
-            return results;
+            if (!context.operator) {
+                throw new Error(context.operatorName + ' is not a known stage operator.');
+            }
+
+            context.callOperator(function (results) {
+                data = results;
+                defer(nextStage);
+            });
         };
 
-        Critr.prototype.count = function (data, query) {
-            data = asArray(data);
-            return data.reduce(bind(function (last, item) {
-                return this.test(item, query) ? last + 1 : last;
-            }, this), 0);
-        };
+        defer(nextStage);
+    };
 
-        return Critr;
-    })();
+    Critr.prototype.group = function (data, expression) {
+        var _idExpression = expression._id || '';
+        var grouped = {};
+        var results = [];
+        var groupKeys = [];
+        data.forEach(function (item) {
+            var _id = !_idExpression ? '' : this.evaluate(item, _idExpression);
+            var group = grouped[_id] || [];
+            group.push(item);
+            grouped[_id] = group;
+        }, this);
+
+        var groupProperties = getProperties(grouped);
+        var accumulators = getProperties(expression).filter(function (p) {
+            return !_idExpression || p.key !== _idExpression;
+        }).map(function (expressionProperty) {
+            var key = Object.keys(expressionProperty.value)[0];
+            return {
+                accumulatorKey: key,
+                accumulator: this.accumulator(key),
+                accumulatorExpression: expressionProperty.value[key],
+                expressionProperty: expressionProperty
+            };
+        }, this);
+
+        groupKey.forEach(function (groupKey) {
+            var group = grouped[groupKey];
+            var result = {};
+            if (_idExpression !== null) {
+                result._id = groupKey;
+            }
+
+            accumulators.forEach(function (a) {
+                if (a.accumulator) {
+                    result[a.expressionProperty.key] = a.accumulator.call(this, group, a.accumulatorExpression);
+                } else {
+                    throw new Error(a.accumulatorKey + ' accumulator is not supported.');
+                }
+            });
+
+            results.push(result);
+        });
+
+        return results;
+    };
+
+    Critr.prototype.count = function (data, query) {
+        data = asArray(data);
+        return data.reduce(bind(function (last, item) {
+            return this.test(item, query) ? last + 1 : last;
+        }, this), 0);
+    };
 
     var instance = new Critr({
         defaults: true,
