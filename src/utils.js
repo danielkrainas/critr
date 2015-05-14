@@ -64,7 +64,7 @@ exports.resolve = function (obj, path) {
     return obj;
 };
 
-exports.deepCompare = function (a, b) {
+var deepCompare = exports.deepCompare = function (a, b) {
     if (a === null || typeof a !== 'object') {
         return a === b;
     }

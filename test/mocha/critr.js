@@ -20,6 +20,7 @@ describe('Critr:', function () {
 
         it('should support deep comparisons', function () {
             expect(critr.test(data, { home: { windows: 2 }})).to.be.true;
+            expect(critr.test(data, { home: { windows: 2, furnace: true }})).to.be.false;
         });
     });
 });
