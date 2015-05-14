@@ -32,7 +32,7 @@ module.exports = function(grunt) {
         
         jshint: {
             all: {
-                src: ['index.js', 'src/<%= pkg.name %>.js'],
+                src: ['index.js', 'lib/*.js'],
                 options: {
                     globalstrict: true,
                     globals: {
@@ -102,13 +102,13 @@ module.exports = function(grunt) {
                 },
                 files: {
                     '.build/<%= pkg.name %>.js': [
-                        'src/utils.js',
-                        'src/accumulators.js',
-                        'src/operators.js',
-                        'src/stages.js',
-                        'src/stage-context.js',
-                        'src/grouper.js',
-                        'src/critr.js'
+                        'lib/utils.js',
+                        'lib/accumulators.js',
+                        'lib/operators.js',
+                        'lib/stages.js',
+                        'lib/stage-context.js',
+                        'lib/grouper.js',
+                        'lib/critr.js'
                     ]
                 }
             }

@@ -1,1 +1,1 @@
-module.exports = require('./src/critr.js');
+module.exports = require('./lib/critr.js');

@@ -1,6 +1,6 @@
 var chai = require('chai');
 var expect = chai.expect;
-var critr = require('../../src/critr');
+var critr = require('../../lib/critr');
 
 describe('Stages:', function () {
     var data;
