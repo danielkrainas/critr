@@ -153,9 +153,11 @@ Critr.prototype.group = function (data, expression) {
     var grouper = new Grouper(expression._id || '');
     data.forEach(grouper.makeFilter(), this);
     var accumulators = utils.map(utils.getProperties(expression).filter(function (p) {
-        return !grouper._idExpression || p.key !== grouper._idExpression;
+        return !grouper._idExpression || p.value !== grouper._idExpression;
     }), function (expressionProperty) {
-        var key = Object.keys(expressionProperty.value)[0];
+        var key = null;
+        key = Object.keys(expressionProperty.value)[0];
+
         return {
             accumulatorKey: key,
             accumulator: this.accumulator(key),
@@ -183,7 +185,15 @@ Critr.prototype.group = function (data, expression) {
 };
 
 Critr.prototype.count = function (data, query) {
+    if (!query) {
+        return 0;
+    }
+
     data = utils.asArray(data);
+    if (utils.isEmptyObject(query)) {
+        return data.length;
+    }
+
     return data.reduce(utils.bind(function (last, item) {
         return this.test(item, query) ? last + 1 : last;
     }, this), 0);

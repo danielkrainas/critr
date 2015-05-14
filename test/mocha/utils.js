@@ -10,7 +10,7 @@ describe('Utils:', function () {
             data = { name: 'bob', home: { windows: 2 }};
         });
 
-        it('should return true if objects are deep equal', function () {
+        it('should return true if objects are deeply equal', function () {
             expect(utils.deepCompare({ name: 'bob', home: { windows: 2 }}, data)).to.be.true;
         });
 

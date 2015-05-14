@@ -19,12 +19,6 @@ Grouper.prototype.makeFilter = function () {
     };
 };
 
-Grouper.prototype.groups = function (fn, thisArg) {
-    for (var i = 0; i < this.ids.length; i++) {
-        fn.call(thisArg, this.ids[i], this.lookup[this.ids[i]]);
-    }
-};
-
 Grouper.prototype.map = function (fn, thisArg) {
     var results = [];
     for (var i = 0; i < this.ids.length; i++) {

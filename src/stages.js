@@ -65,13 +65,13 @@ exports.$skip = iterationOperator(function (context, item, index) {
     }
 });
 
-exports.$match = iterationOperator(function (context, item, index) {
+exports.$match = iterationOperator(function (context, item) {
     if (this.test(item, context.param)) {
         context.output(item);
     }
 });
 
-exports.$project = iterationOperator(function (context, item, index) {
+exports.$project = iterationOperator(function (context, item) {
     var result = {};
     context.forEachParamKey(function (key, paramValue) {
         var include = false;

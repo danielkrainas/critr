@@ -4,6 +4,10 @@ var keySorter = function (a, b) {
     return a.key > b.key;
 };
 
+exports.isEmptyObject = function (obj) {
+    return JSON.stringify(obj) === '{}';
+};
+
 exports.bind = function (fn, thisArg) {
     return function () {
         var args = Array.prototype.slice.call(arguments, 0);

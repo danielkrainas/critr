@@ -174,6 +174,29 @@ describe('Stages:', function () {
         });
     });
 
+    describe('group', function () {
+        beforeEach(function () {
+            data = [
+                { name: 'bob', age: 5, gender: 'male' },
+                { name: 'fred', age: 7, gender: 'male' },
+                { name: 'sarah', age: 22, gender: 'female' }
+            ];
+        });
+
+        it('should group values according to _id expression', function (done) {
+            critr.pipe(data, [
+                {
+                    $group: { _id: '$gender' }
+                }
+            ], function (result) {
+                expect(result).to.have.length(2);
+                expect(result[0]).to.have.property('_id', 'male');
+                expect(result[1]).to.have.property('_id', 'female');
+                done();
+            });
+        });
+    });
+
     describe('$project', function () {
 
         beforeEach(function () {
