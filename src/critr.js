@@ -98,21 +98,18 @@ Critr.prototype.evaluate = function (obj, expression) {
     } else if (typeof expression === 'number') {
         result = expression;
     } else {
-        for (var key in expression) {
-            if (!expression.hasOwnProperty(key)) {
-                continue;
-            }
-
-            var param = expression[key];
-            var operator = this.operator(key);
+        var expressionProperties = utils.getProperties(expression);
+        for (var i = 0; i < expressionProperties.length; i++) {
+            var p = expressionProperties[i];
+            var operator = this.operator(p.key);
             if (operator) {
                 result = operator.call(this, {
-                    param: param,
+                    param: p.value,
                     data: obj,
                     expression: expression
                 });
             } else {
-                throw new Error(key + ' operator is not supported.');
+                throw new Error(p.key + ' operator is not supported.');
             }
         }
     }
@@ -137,7 +134,7 @@ Critr.prototype.pipe = function (data, stages, callback) {
         });
 
         if (!context.operator) {
-            throw new Error(context.name + ' is not a known stage operator.');
+            return callback(null, new Error(context.name + ' is not a known stage operator.'));
         }
 
         context.callOperator(function (results) {

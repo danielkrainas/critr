@@ -45,6 +45,42 @@ describe('Critr:', function () {
             expect(result[0]).to.have.property('_id', 'male');
             expect(result[1]).to.have.property('_id', 'female');
         });
+
+        it('should throw error when encountering unsupported accumulator', function () {
+            expect(function () {
+                critr.group(data, { _id: '$gender', age: { $unsupported: true }});
+            }).to.throw(Error);
+        });
+    });
+
+    describe('pipe', function () {
+        beforeEach(function () {
+            data = [
+                { name: 'bob' },
+                { name: 'fred' },
+                { name: 'john' }
+            ];
+        });
+
+        it('should return result after running data through $skip and $limit operations', function (done) {
+            critr.pipe(data, [
+                { $skip: 1 },
+                { $limit: 1 }
+            ], function (result) {
+                expect(result).to.have.length(1);
+                expect(result[0]).to.equal(data[1]);
+                done();
+            });
+        });
+
+        it('should return null when encountering an unsupported stage', function (done) {
+            critr.pipe(data, [
+                { $unsupported: true }
+            ], function (result) {
+                expect(result).to.be.null;
+                done();
+            });
+        });
     });
 
     describe('count', function () {
