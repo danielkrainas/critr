@@ -2,7 +2,7 @@ var chai = require('chai');
 var expect = chai.expect;
 var critr = require('../../src/critr');
 
-describe('Fields:', function () {
+describe('Evaluation:', function () {
     describe('$mod', function () {
         it('should return correct remainder', function () {
             expect(critr.evaluate({}, { $mod: [5, 2] })).to.equal(1);

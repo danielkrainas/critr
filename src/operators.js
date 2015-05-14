@@ -9,6 +9,11 @@ var noopHandler = function () {
 };
 
 var reduceParamOperation = function (startValue, fn) {
+    if (arguments.length === 1) {
+        fn = startValue;
+        startValue = null;
+    }
+    
     return function (context) {
         return context.param.reduce(utils.bind(function (last, expression) {
             return fn.call(this, context, expression, last);
