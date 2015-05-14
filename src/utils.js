@@ -1,5 +1,9 @@
 "use strict";
 
+var keySorter = function (a, b) {
+    return a.key > b.key;
+};
+
 exports.bind = function (fn, thisArg) {
     return function () {
         var args = Array.prototype.slice.call(arguments, 0);
@@ -58,10 +62,6 @@ exports.resolve = function (obj, path) {
     }
 
     return obj;
-};
-
-exports.keySorter = function (a, b) {
-    return a.key > b.key;
 };
 
 exports.deepCompare = function (a, b) {
