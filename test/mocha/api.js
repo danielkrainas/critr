@@ -5,6 +5,22 @@ var critr = require('../../src/critr');
 describe('Critr:', function () {
     var data;
 
+    describe('evaluate', function () {
+        beforeEach(function () {
+            data = { name: 'bob', home: { windows: 2, exits: [{ location: 'front' }, { location: 'back' }] } };
+        });
+
+        it('should return the evaluated expression', function () {
+            expect(critr.evaluate(data, { $literal: 2 })).to.equal(2);
+        });
+
+        it('should throw error when encountering an unsupported operator', function () {
+            expect(function () {
+                critr.evaluate(data, { $unsupported: true });
+            }).to.throw(Error);
+        });
+    });
+
     describe('test', function () {
         beforeEach(function () {
             data = { name: 'bob', home: { windows: 2, exits: [{ location: 'front' }, { location: 'back' }] } };
@@ -23,7 +39,7 @@ describe('Critr:', function () {
             expect(critr.test(data, { home: { windows: 2, furnace: true }})).to.be.false;
         });
 
-        it('should throw error when encountering unsupported operator', function () {
+        it('should throw error when encountering an unsupported operator', function () {
             expect(function () {
                 critr.test(data, { home: { $unsupported: true }});
             }).to.throw(Error);
