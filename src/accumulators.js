@@ -2,18 +2,33 @@
 
 var utils = require('./utils');
 
-exports.$sum = function (data, expression) {
-    return data.reduce(utils.bind(function (total, item) {
-        if (typeof expression === 'number') {
-            return total + expression;
-        }
-
-        return total + this.evaluate(item, expression);
-    }, this), 0);
+var reduce = function (data, startValue, fn) {
+    return data.reduce(utils.bind(fn, this), startValue);
 };
 
+var reduceDataOperation = function (startValue, fn) {
+    if (arguments.length === 1) {
+        fn = startValue;
+        startValue = null;
+    }
+
+    return function (data, expression) {
+        return reduce.call(this, data, startValue, function (last, item) {
+            return fn.call(this, expression, item, last);
+        });
+    };
+};
+
+var $sum = exports.$sum = reduceDataOperation(0, function (expression, item, total) {
+    if (typeof expression === 'number') {
+        return total + expression;
+    }
+
+    return total + this.evaluate(item, expression);
+});
+
 exports.$avg = function (data, expression) {
-    var total = exports.$sum(data, expression);
+    var total = $sum.call(this, data, expression);
     return total / data.length;
 };
 
@@ -25,19 +40,15 @@ exports.$last = function (data, expression) {
     return this.evaluate(data[data.length - 1], expression);
 };
 
-exports.$max = function (data, expression) {
-    return data.reduce(utils.bind(function (max, item) {
-        var value = this.evaluate(item, expression);
-        return max === null ? value : Math.max(max, value);
-    }, this), null);
-};
+exports.$max = reduceDataOperation(null, function (expression, item, max) {
+    var value = this.evaluate(item, expression);
+    return max === null ? value : Math.max(max, value);
+});
 
-exports.$min = function (data, expression) {
-    return data.reduce(utils.bind(function (min, item) {
-        var value = this.evaluate(item, expression);
-        return min === null ? value : Math.min(min, value);
-    }, this), null);
-};
+exports.$min = reduceDataOperation(null, function (expression, item, min) {
+    var value = this.evaluate(item, expression);
+    return min === null ? value : Math.min(min, value);
+});
 
 exports.$push = function (data, expression) {
     return data.map(utils.bind(function (item) {
