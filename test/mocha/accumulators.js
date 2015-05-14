@@ -18,6 +18,11 @@ describe('Accumulators:', function () {
             var result = critr.group(data, { age: { $sum: '$age' }});
             expect(result[0]).to.have.property('age', 12);
         });
+
+        it('should sum raw values per data item', function () {
+            var result = critr.group(data, { age: { $sum: 1 }});
+            expect(result[0]).to.have.property('age', 3);
+        });
     });
 
     describe('$avg', function () {

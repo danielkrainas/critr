@@ -8,17 +8,21 @@ var noopHandler = function () {
     return true;
 };
 
-exports.$and = function (context) {
-    return context.param.reduce(utils.bind(function (last, expression) {
-        return last && this.test(context.data, expression);
-    }, this), true);
+var reduceParamOperation = function (startValue, fn) {
+    return function (context) {
+        return context.param.reduce(utils.bind(function (last, expression) {
+            return fn.call(this, context, expression, last);
+        }, this), startValue);
+    };
 };
 
-exports.$or = function (context) {
-    return context.param.reduce(utils.bind(function (last, expression) {
-        return last || this.test(context.data, expression);
-    }, this), false);
-};
+exports.$and = reduceParamOperation(true, function (context, expression, last) {
+    return last && this.test(context.data, expression);
+});
+
+exports.$or = reduceParamOperation(false, function (context, expression, last) {
+    return last || this.test(context.data, expression);
+});
 
 exports.$nor = function (context) {
     return context.param.reduce(utils.bind(function (last, expression) {
@@ -134,31 +138,23 @@ exports.$cond = function (context) {
     }
 };
 
-exports.$add = function (context) {
-    return context.param.reduce(utils.bind(function (sum, expression) {
-        return sum + this.evaluate(context.data, expression);
-    }, this), 0);
-};
+exports.$add = reduceParamOperation(0, function (context, expression, sum) {
+    return sum + this.evaluate(context.data, expression);
+});
 
-exports.$subtract = function (context) {
-    return context.param.reduce(utils.bind(function (diff, expression) {
-        var value = this.evaluate(context.data, expression);
-        return diff === null ? value : diff - value;
-    }, this), null);
-};
+exports.$subtract = reduceParamOperation(function (context, expression, diff) {
+    var value = this.evaluate(context.data, expression);
+    return diff === null ? value : diff - value;
+});
 
-exports.$multiply = function (context) {
-    return context.param.reduce(utils.bind(function (product, expression) {
-        return product * this.evaluate(context.data, expression);
-    }, this), 1);
-};
+exports.$multiply = reduceParamOperation(1, function (context, expression, product) {
+    return product * this.evaluate(context.data, expression);
+});
 
-exports.$divide = function (context) {
-    return context.param.reduce(utils.bind(function (quotient, expression) {
-        var value = this.evaluate(context.data, expression);
-        return quotient === null ? value : quotient / value;
-    }, this), null);
-};
+exports.$divide = reduceParamOperation(function (context, expression, quotient) {
+    var value = this.evaluate(context.data, expression);
+    return quotient === null ? value : quotient / value;
+});
 
 exports.$mod = function (context) {
     return this.evaluate(context.data, context.param[0]) % this.evaluate(context.data, context.param[1]);

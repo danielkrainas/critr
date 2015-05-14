@@ -14,17 +14,17 @@ var reduceDataOperation = function (startValue, fn) {
 
     return function (data, expression) {
         return reduce.call(this, data, startValue, function (last, item) {
-            return fn.call(this, expression, item, last);
+            return fn.call(this, expression, item, this.evaluate(item, expression), last);
         });
     };
 };
 
-var $sum = exports.$sum = reduceDataOperation(0, function (expression, item, total) {
+var $sum = exports.$sum = reduceDataOperation(0, function (expression, item, value, total) {
     if (typeof expression === 'number') {
         return total + expression;
     }
 
-    return total + this.evaluate(item, expression);
+    return total + value;
 });
 
 exports.$avg = function (data, expression) {
@@ -40,13 +40,11 @@ exports.$last = function (data, expression) {
     return this.evaluate(data[data.length - 1], expression);
 };
 
-exports.$max = reduceDataOperation(null, function (expression, item, max) {
-    var value = this.evaluate(item, expression);
+exports.$max = reduceDataOperation(function (expression, item, value, max) {
     return max === null ? value : Math.max(max, value);
 });
 
-exports.$min = reduceDataOperation(null, function (expression, item, min) {
-    var value = this.evaluate(item, expression);
+exports.$min = reduceDataOperation(function (expression, item, value, min) {
     return min === null ? value : Math.min(min, value);
 });
 
