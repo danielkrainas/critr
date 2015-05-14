@@ -22,6 +22,12 @@ describe('Critr:', function () {
             expect(critr.test(data, { home: { windows: 2 }})).to.be.true;
             expect(critr.test(data, { home: { windows: 2, furnace: true }})).to.be.false;
         });
+
+        it('should throw error when encountering unsupported operator', function () {
+            expect(function () {
+                critr.test(data, { home: { $unsupported: true }});
+            }).to.throw(Error);
+        });
     });
 
     describe('group', function () {
