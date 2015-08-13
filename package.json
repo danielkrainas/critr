@@ -1,7 +1,7 @@
 {
   "name": "critr",
   "version": "0.1.0",
-  "description": "A NodeJS/browser compatible object and collection manipulation library using a simple and flexible JSON syntax, inspired by MongoDB's query syntax.",
+  "description": "A NodeJS/browser compatible object filtering and manipulation library that uses a flexible and extensible MongoDB-like syntax.",
   "main": "index.js",
   "homepage": "https://github.com/danielkrainas/critr",
   "repository": {
